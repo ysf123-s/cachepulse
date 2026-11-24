@@ -1,0 +1,8 @@
+-- 在 application.yml 配置的演示数据库中手动执行，不会由应用自动建表。
+CREATE TABLE IF NOT EXISTS users (
+    id BIGINT NOT NULL AUTO_INCREMENT PRIMARY KEY,
+    name VARCHAR(64) NOT NULL,
+    email VARCHAR(128),
+    phone VARCHAR(32),
+    created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;

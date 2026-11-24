@@ -1,0 +1,270 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>缓存同步控制台</title>
+  <style>
+    :root{font-family:"Microsoft YaHei",system-ui,sans-serif;color:#233249;background:#f3f6fa;font-size:15px}
+    *{box-sizing:border-box}body{margin:0}main{max-width:1180px;margin:auto;padding:36px 24px}
+    header{display:flex;justify-content:space-between;align-items:center;gap:18px;margin-bottom:26px}
+    h1{font-size:28px;letter-spacing:.02em;margin:0 0 8px}h2{font-size:18px;margin:0 0 18px}
+    p{line-height:1.7;margin:6px 0;color:#617087}.muted{font-size:13px;color:#617087}
+    .cards{display:grid;grid-template-columns:repeat(5,1fr);gap:16px;margin-bottom:22px}
+    .card,section{background:white;border:1px solid #dfe6ef;border-radius:12px;padding:22px}
+    .card strong{display:block;font-size:27px;margin:10px 0 2px;color:#174ea6}.card span{font-size:13px;color:#617087}
+    section{margin-bottom:20px}.scroll{overflow-x:auto}table{width:100%;border-collapse:collapse;white-space:nowrap}
+    th,td{text-align:left;padding:13px 12px;border-bottom:1px solid #edf0f5;font-size:14px}
+    th{color:#617087;font-weight:500;background:#f8faff}tbody tr:last-child td{border-bottom:0}
+    label{display:block;font-size:13px;margin-bottom:8px;color:#617087}input,select,button{font:inherit;border-radius:7px}
+    input,select{width:100%;padding:11px 12px;border:1px solid #cbd5e3;background:white;color:#233249}
+    .controls{display:grid;grid-template-columns:220px 1fr;gap:16px;margin-bottom:16px}
+    .browse-controls{grid-template-columns:180px 180px 1fr}.query-input{grid-template-columns:1fr}
+    .buttons{display:flex;flex-wrap:wrap;gap:10px}button{cursor:pointer;padding:10px 17px;border:1px solid #bdcce1;background:white;color:#254c80}
+    button.primary{background:#245dc1;border-color:#245dc1;color:white}button.danger{color:#ae3a39;border-color:#e5c5c5}
+    button:disabled{opacity:.5;cursor:wait}button:focus-visible,input:focus-visible,select:focus-visible{outline:3px solid #9cbcf0;outline-offset:2px}
+    pre{white-space:pre-wrap;overflow-wrap:anywhere;background:#f7f9fc;border:1px solid #e3e9f1;padding:16px;border-radius:8px;font:13px/1.65 Consolas,monospace;max-height:380px;overflow:auto;margin:16px 0 0}
+    #notice{padding:12px 16px;border-radius:8px;background:#eaf2ff;color:#254c80;margin-bottom:20px}
+    #notice.error{background:#fbeceb;color:#9c2f2f}#errorDetail{color:#875d1c;background:#fff8e9;border-color:#f0dfb8}
+    .status-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}.status-grid strong{font-weight:500;color:#233249}
+    @media(max-width:760px){main{padding:22px 14px}.cards{grid-template-columns:repeat(2,1fr)}header{align-items:flex-start;flex-direction:column}.controls,.status-grid{grid-template-columns:1fr}.card,section{padding:17px}}
+  </style>
+  <link rel="stylesheet" href="dashboard-ui.css">
+</head>
+<body>
+<main>
+  <nav style="margin-bottom:16px;"><a href="platform-dashboard.html" style="color:#245dc1;font-weight:600;text-decoration:none;">→ 切换至 数据库变更处理平台控制台</a></nav>
+  <header><div><h1>缓存同步控制台</h1><p>查看缓存使用情况，查询业务数据，维护指定缓存。</p></div><span class="muted" id="updated">正在连接…</span></header>
+  <div id="notice" role="status" aria-live="polite">正在读取运行状态。</div>
+  <details id="errorTechnical" class="technical" hidden><summary>错误技术详情</summary><pre id="errorRaw"></pre></details>
+  <div class="cards">
+    <div class="card"><span>已注册业务表</span><strong id="groupCount">—</strong><span>共用缓存同步流程</span></div>
+    <div class="card"><span>成功处理事件</span><strong id="processed">—</strong><span>重试可能重复计数</span></div>
+    <div class="card"><span>失败批次尝试</span><strong id="failed">—</strong><span>历史累计，不代表当前故障</span></div>
+    <div class="card"><span>同步删除缓存键</span><strong id="deleted">—</strong><span>不含手动失效操作</span></div>
+    <div class="card"><span>死信事件</span><strong id="deadLetters">—</strong><span>无法处理已跳过，本进程累计</span></div>
+    <div class="card"><span>CDC 心跳</span><strong id="freshness">—</strong><span id="freshnessDetail">链路追不上时查询直接读库</span></div>
+    <div class="card"><span>消息丢失检测</span><strong id="loss">—</strong><span id="lossDetail">心跳跳号说明有变更没被处理</span></div>
+    <div class="card"><span>Redis 熔断</span><strong id="breaker">—</strong><span id="breakerDetail">Redis 出错时查询直接读库</span></div>
+    <div class="card"><span>查库并发</span><strong id="loadGuard">—</strong><span id="loadGuardDetail">超过上限返回 503</span></div>
+    <div class="card"><span>主键布隆过滤器</span><strong id="bloom">—</strong><span id="bloomDetail">判定不存在的主键走窄通道</span></div>
+  </div>
+  <section><h2>缓存分组与查询统计</h2>
+    <div class="scroll"><table><thead><tr><th>业务表 / 缓存键</th><th>过期 / 空值</th><th>命中 / 未命中</th><th>命中率</th><th>查库次数 / ID 数</th><th>合并加载数</th></tr></thead><tbody id="groups"></tbody></table></div>
+    <p class="muted">统计按去重后的 ID 计数，空值缓存计为命中；查库次数包含失败尝试。所有统计随进程重启清零。</p>
+  </section>
+  <section><h2>浏览分组缓存</h2>
+    <div class="controls browse-controls"><div><label for="table">业务表（同时用于下方查询）</label><select id="table"></select></div><div><label for="scanCount">每批扫描量</label><select id="scanCount"><option>10</option><option selected>20</option><option>50</option><option>100</option></select></div><div class="buttons"><button id="browse">从头浏览当前分组</button><button id="nextPage" disabled>下一批</button><button class="danger" id="purge">清空当前分组缓存</button></div></div>
+    <p id="browseStatus" class="muted">点击浏览即可查看当前分组缓存，无需预先输入 ID。</p>
+    <div class="scroll"><table><thead><tr><th>数据 ID</th><th>缓存键</th><th>操作</th></tr></thead><tbody id="entries"></tbody></table></div>
+    <p class="muted">列表包含加载中的条目。缓存会随时变化；每批条数不固定，可能重复或为空，“下一批”可用时仍可继续浏览。清空分组只删除缓存，后续查询会重新加载。</p>
+  </section>
+  <section><h2>死信事件</h2>
+    <p class="muted">无法处理的变更（如消息损坏、缺少主键）不再阻塞后续消息，会记录在这里。能确定 ID 的可在上方失效对应缓存，无法确定时可清空整个分组。</p>
+    <div class="buttons"><button id="loadDeadLetters">查看最近 20 条</button></div>
+    <div id="deadLetterList" class="result-panel"><p class="muted">点击按钮读取最近的死信记录。</p></div>
+  </section>
+  <section><h2>查询与缓存维护</h2>
+    <div class="controls query-input"><div><label for="ids">数据 ID（逗号分隔，最多 100 个正整数）</label><input id="ids" placeholder="例如：1,2,3" autocomplete="off"></div></div>
+    <div class="buttons"><button class="primary" id="query">查询业务数据</button><button id="inspect">查看缓存详情</button><button class="danger" id="invalidate">失效指定缓存</button></div>
+    <p class="muted">查看详情每次输入一个 ID。失效操作仅删除缓存，后续业务查询会重新加载数据。</p>
+    <div id="result" class="result-panel" aria-live="polite"><p class="muted">选择业务表并输入 ID 后，查询结果会以表格显示。</p></div>
+  </section>
+  <section><h2>同步运行状态</h2><div class="status-grid"><p>服务：<strong id="started">—</strong></p><p>活跃消费者 / 配置数：<strong id="consumers">—</strong></p><p>最近成功确认：<strong id="lastSuccess">—</strong></p><p class="muted">没有新消息时，成功确认时间不会更新。</p></div><div id="errorDetail" class="result-panel">尚未读取最近异常。</div><details class="technical"><summary>运行状态完整 JSON</summary><pre id="overviewRaw"></pre></details></section>
+</main>
+<script src="dashboard-ui.js"></script>
+<script>
+  const UI = window.DashboardUI;
+  const $ = id => document.getElementById(id);
+  const routes = {users:'/users',departments:'/departments'};
+  const number = value => Number(value).toLocaleString('zh-CN');
+  const FRESHNESS = {FRESH:'正常',STALE:'已降级：直接读库',STARTING:'确认中：直接读库',WRITE_FAILING:'心跳写入失败：继续用缓存',DISABLED:'未启用'};
+  const date = value => value ? new Date(typeof value==='number'?value*1000:value).toLocaleString('zh-CN') : '暂无';
+  const epochMs = value => new Date(value).toLocaleString('zh-CN');
+  let overviewFailed=false;
+  let nextCursor='0';
+  function notice(message,error=false,details){$('notice').textContent=message;$('notice').classList.toggle('error',error);$('errorTechnical').hidden=!details;$('errorTechnical').open=false;$('errorRaw').textContent=details||'';}
+  async function api(path,options={}){
+    const response=await fetch(path,{...options,headers:{'Content-Type':'application/json',...options.headers}});
+    const text=await response.text();
+    if(!response.ok)throw UI.requestError(response.status,text||response.statusText);
+    return text ? JSON.parse(text) : null;
+  }
+  async function overview(){
+    const data=await api('/cache/overview');
+    $('groupCount').textContent=number(data.groups.length);
+    $('processed').textContent=number(data.processedEvents);$('failed').textContent=number(data.failedBatches);$('deleted').textContent=number(data.deletedKeys);$('deadLetters').textContent=number(data.deadLetters??0);
+    const selected=$('table').value;$('table').replaceChildren();$('groups').replaceChildren();
+    for(const group of data.groups){
+      const option=document.createElement('option');option.value=group.table;option.textContent=group.table;$('table').append(option);
+      const row=document.createElement('tr');
+      const cells=[`${group.table} / ${group.keyTemplate}`,`${group.expireSeconds}s / ${group.nullExpireSeconds}s`,`${number(group.hits)} / ${number(group.misses)}`,group.hitRate===null?'暂无样本':`${(group.hitRate*100).toFixed(1)}%`,`${number(group.databaseCalls)} / ${number(group.databaseIds)}`,number(group.coalescedLoads)];
+      for(const value of cells){const cell=document.createElement('td');cell.textContent=value;row.append(cell);}$('groups').append(row);
+    }
+    if(data.groups.some(group=>group.table===selected))$('table').value=selected;
+    $('started').textContent=data.sync.serviceStarted?'已启动':'未启动';
+    $('consumers').textContent=`${data.sync.activeConsumers} / ${data.sync.configuredConsumers}`;
+    $('lastSuccess').textContent=date(data.sync.lastSuccessAt);
+    const error=data.sync.lastError;
+    $('errorDetail').innerHTML=error?'<h3>最近记录的同步异常</h3>'+UI.facts([['发生时间',date(error.occurredAt)],['错误说明',error.message]])+'<p class="muted">此处保留最近一次记录；可结合上方成功确认时间查看后续进展。</p>'+UI.technical(error):'<p>本次进程没有同步异常记录。</p>';
+    const fresh=await api('/cache/freshness');
+    $('freshness').textContent=FRESHNESS[fresh.state]??fresh.state;
+    const ages=Object.values(fresh.partitionAgeMs||{});
+    $('freshnessDetail').textContent=fresh.state==='DISABLED'?'未启用心跳，查询始终使用缓存':ages.length?`最慢分区 ${number(Math.max(...ages))} ms，覆盖 ${ages.length} 个分区`:fresh.lastWriteError?`写入失败：${fresh.lastWriteError}`:'尚未收到心跳';
+    const loss=fresh.lastLoss;
+    $('loss').textContent=fresh.lossDetection==='ON'?(fresh.lossEvents?`发现 ${number(fresh.lossEvents)} 次`:'未发现'):fresh.lossDetection==='UNAVAILABLE'?'无法检测':'未启用';
+    $('lossDetail').textContent=loss?`最近：分区 ${loss.partitions.join('、')} 在 ${epochMs(loss.fromMs)} 至 ${epochMs(loss.toMs)} 的变更可能没删缓存`:fresh.lossDetection==='UNAVAILABLE'?'binlog 行镜像缺少心跳旧值':'心跳跳号说明有变更没被处理';
+    const protection=await api('/cache/protection');
+    const redis=protection.redis;
+    $('breaker').textContent=!redis?'未启用':redis.state==='OPEN'?'已熔断：直接读库':'正常';
+    $('breakerDetail').textContent=redis?`Redis 出错改为查库 ${number(redis.fallbacks)} 次`:'Redis 出错时查询直接报错';
+    const normal=protection.loads.NORMAL,suspect=protection.loads.SUSPECT;
+    $('loadGuard').textContent=`${number(normal.inUse)} / ${number(normal.limit)}`;
+    $('loadGuardDetail').textContent=`拒绝 ${number(normal.rejected+suspect.rejected)} 次；可疑主键通道 ${number(suspect.inUse)} / ${number(suspect.limit)}`;
+    const filters=Object.entries(protection.bloomFilters||{});
+    $('bloom').textContent=filters.length?`${filters.filter(([,filter])=>filter.ready).length} / ${filters.length} 张表就绪`:'未启用';
+    $('bloomDetail').textContent=filters.length?filters.map(([table,filter])=>`${table} 约 ${number(filter.approximateCount)} 个主键${filter.ready?'':filter.error?'（构建失败，重试中）':'（构建中）'}`).join('；'):'不存在的主键查库不分流';
+    $('overviewRaw').textContent=JSON.stringify(data,null,2);
+    $('updated').textContent=`状态更新于 ${date(data.capturedAt)}`;
+    if(overviewFailed){notice('状态连接已恢复。');overviewFailed=false;}
+  }
+  function overviewError(error){overviewFailed=true;notice(`状态读取失败：${error.message}`,true,error.details);}
+  function recordTable(items){
+    if(!items.length)return '<p class="muted">没有可展示的业务记录。</p>';
+    const fields=[...new Set(items.flatMap(item=>Object.keys(item)))];
+    return `<div class="scroll"><table class="readable-table"><thead><tr>${fields.map(field=>`<th>${UI.escape(field)}</th>`).join('')}</tr></thead><tbody>${items.map(item=>`<tr>${fields.map(field=>`<td>${Object.prototype.hasOwnProperty.call(item,field)?UI.value(item[field]):'<span class="muted">不存在</span>'}</td>`).join('')}</tr>`).join('')}</tbody></table></div>`;
+  }
+  function renderResult(kind,result){
+    const panel=$('result');
+    if(kind==='invalidate'){
+      panel.innerHTML='<h3>缓存失效完成</h3><p class="result-message">后续业务查询会按需重新加载这些缓存。</p>'+UI.stats([['请求失效的键',result.requestedKeys],['实际删除的键',result.deletedKeys]])+UI.technical(result);
+    }else if(kind==='inspect'){
+      const hasData=Object.prototype.hasOwnProperty.call(result.hash,'data');
+      const data=hasData?JSON.parse(result.hash.data):null;
+      const state=result.ttlSeconds===-2?'缓存不存在':hasData?(data===null?'空值缓存（记录不存在）':'已缓存业务数据'):'正在加载，尚未回填';
+      const ttl=result.ttlSeconds===-2?'不存在':result.ttlSeconds===-1?'未设置过期':`${result.ttlSeconds} 秒`;
+      panel.innerHTML='<h3>缓存详情</h3>'+UI.facts([['业务表',result.table],['数据 ID',result.id],['缓存键',result.key],['状态',state],['剩余有效时间',ttl]])
+        +(hasData&&data!==null?'<h3>缓存中的业务数据</h3>'+recordTable([data]):`<p class="result-message">${UI.escape(state)}</p>`)+UI.technical(result,'Redis 原始字段与完整 JSON');
+    }else{
+      const batch=Object.prototype.hasOwnProperty.call(result,'items');
+      const items=batch?result.items:[result];
+      panel.innerHTML='<h3>业务查询结果</h3>'+UI.stats([['找到记录',items.length],['未找到',batch?result.missingIds.length:0]])+recordTable(items)
+        +(batch&&result.missingIds.length?`<p class="result-message warning">未找到的 ID：${result.missingIds.map(UI.escape).join('、')}</p>`:'')+UI.technical(result);
+    }
+    panel.innerHTML+=`<p class="result-updated">操作完成于 ${new Date().toLocaleTimeString()}</p>`;
+    panel.scrollIntoView({behavior:'smooth',block:'start'});
+  }
+  function inputIds(){
+    const text=$('ids').value.trim();const tokens=text.split(/[,，\s]+/);
+    if(!text||tokens.length>100||tokens.some(token=>!/^\d+$/.test(token)||!Number.isSafeInteger(Number(token))||Number(token)<=0))throw new Error('请输入 1 至 100 个正整数 ID；多个 ID 用逗号分隔。');
+    return tokens.map(Number);
+  }
+  function resetBrowse(){
+    nextCursor='0';$('entries').replaceChildren();$('nextPage').disabled=true;
+    $('browseStatus').textContent='分组已切换，点击浏览查看当前分组缓存。';
+  }
+  async function browse(cursor){
+    const table=$('table').value;
+    if(!table){notice('尚未取得已注册的业务表。',true);return;}
+    $('browse').disabled=true;$('nextPage').disabled=true;$('table').disabled=true;$('scanCount').disabled=true;
+    $('browseStatus').textContent='正在读取缓存列表…';
+    let succeeded=false;
+    try{
+      const page=await api(`/cache/groups/${encodeURIComponent(table)}/entries?cursor=${encodeURIComponent(cursor)}&count=${$('scanCount').value}`);
+      nextCursor=page.nextCursor;$('entries').replaceChildren();
+      for(const entry of page.entries){
+        const row=document.createElement('tr');
+        for(const value of [entry.id,entry.key]){const cell=document.createElement('td');cell.textContent=value;row.append(cell);}
+        const actions=document.createElement('td');
+        for(const [label,invalidate] of [['查看详情',false],['失效',true]]){
+          const button=document.createElement('button');button.textContent=label;
+          button.addEventListener('click',()=>entryAction(table,entry.id,invalidate,button));actions.append(button);
+        }
+        row.append(actions);$('entries').append(row);
+      }
+      $('browseStatus').textContent=`${table}：本批 ${page.entries.length} 项。${nextCursor==='0'?'本轮浏览已结束，可从头刷新。':'仍可继续下一批。'}`;
+      succeeded=true;
+    }catch(error){$('browseStatus').textContent=`浏览失败：${error.message}`;notice(error.message,true,error.details);}
+    finally{
+      $('browse').disabled=false;$('table').disabled=false;$('scanCount').disabled=false;
+      // 失败时保留原游标，可重试同一批；不把失败显示成扫描结束。
+      $('nextPage').disabled=nextCursor==='0';
+      if(!succeeded&&cursor!=='0')$('nextPage').disabled=false;
+    }
+  }
+  async function purge(){
+    const table=$('table').value;
+    if(!table){notice('尚未取得已注册的业务表。',true);return;}
+    if(!confirm(`确定清空 ${table} 分组的全部缓存吗？后续查询会重新查库。`))return;
+    $('purge').disabled=true;notice('正在清空分组缓存…');
+    try{
+      const result=await api(`/cache/groups/${encodeURIComponent(table)}/purge`,{method:'POST'});
+      resetBrowse();notice(`已清空 ${result.table} 分组，实际删除 ${number(result.deletedKeys)} 项。`);
+      await overview();
+    }catch(error){notice(error.message,true,error.details);}
+    finally{$('purge').disabled=false;}
+  }
+  const deadLetterReasons={MALFORMED_ENTRY:'消息无法解析',UNKNOWN_EVENT_TYPE:'未知事件类型',MISSING_PRIMARY_KEY:'缺少主键'};
+  async function loadDeadLetters(){
+    $('loadDeadLetters').disabled=true;
+    try{
+      const letters=await api('/cache/dead-letters?count=20');
+      if(!letters.length){$('deadLetterList').innerHTML='<p>暂无死信记录。</p>';return;}
+      const rows=letters.map(({fields})=>{
+        const source=fields.kafkaPartition!==undefined?`Kafka ${fields.kafkaPartition}:${fields.kafkaOffset}`:'—';
+        const binlog=fields.binlogFile&&fields.binlogFile!=='mq'?`${fields.binlogFile}:${fields.binlogPosition}`:'—';
+        return `<tr><td>${UI.escape(date(fields.recordedAt))}</td><td>${UI.escape(deadLetterReasons[fields.reason]||fields.reason)}</td><td>${UI.escape(fields.table||'—')}</td><td>${UI.escape(source)}</td><td>${UI.escape(binlog)}</td><td>${UI.escape(fields.message||'')}</td></tr>`;
+      }).join('');
+      $('deadLetterList').innerHTML=`<div class="scroll"><table class="readable-table"><thead><tr><th>记录时间</th><th>原因</th><th>业务表</th><th>Kafka 位置</th><th>binlog 位置</th><th>说明</th></tr></thead><tbody>${rows}</tbody></table></div>`+UI.technical(letters);
+    }catch(error){notice(error.message,true,error.details);}
+    finally{$('loadDeadLetters').disabled=false;}
+  }
+  async function entryAction(table,id,invalidate,button){
+    button.disabled=true;
+    button.setAttribute('aria-busy','true');notice(invalidate?'正在失效缓存…':'正在读取缓存详情…');
+    try{
+      // 列表 ID 是服务端返回的规范 Long 数字字符串，直接组成 JSON 数字，避免 Number 精度丢失。
+      const result=invalidate
+        ?await api(`/cache/entries/${encodeURIComponent(table)}/invalidate`,{method:'POST',body:`{"ids":[${id}]}`})
+        :await api(`/cache/entries/${encodeURIComponent(table)}/${id}`);
+      renderResult(invalidate?'invalidate':'inspect',result);
+      notice(invalidate?`失效操作完成，实际删除 ${result.deletedKeys} 项，可从头浏览刷新列表。`:'缓存详情已显示在下方。');
+      await overview();
+    }catch(error){notice(error.message,true,error.details);}
+    finally{button.disabled=false;button.removeAttribute('aria-busy');}
+  }
+  async function action(kind){
+    const buttons=['query','inspect','invalidate'].map($);buttons.forEach(button=>button.disabled=true);
+    const active=$(kind==='query'?'query':kind==='inspect'?'inspect':'invalidate');active.setAttribute('aria-busy','true');
+    notice('正在处理，请稍候…');
+    try{
+      const ids=inputIds();const table=$('table').value;if(!table)throw new Error('尚未取得已注册的业务表。');
+      let result;
+      if(kind==='inspect'){
+        if(ids.length!==1)throw new Error('查看缓存详情时，请只输入一个 ID。');
+        result=await api(`/cache/entries/${encodeURIComponent(table)}/${ids[0]}`);
+      }else if(kind==='invalidate'){
+        result=await api(`/cache/entries/${encodeURIComponent(table)}/invalidate`,{method:'POST',body:JSON.stringify({ids})});
+      }else{
+        const route=routes[table];if(!route)throw new Error('该表尚未提供业务查询接口。');
+        result=ids.length===1?await api(`${route}/${ids[0]}`):await api(`${route}/batch`,{method:'POST',body:JSON.stringify({ids})});
+      }
+      renderResult(kind,result);notice(kind==='invalidate'?'指定缓存失效操作已完成。':'查询完成，结果已显示。');
+      await overview();
+    }catch(error){notice(error.message,true,error.details);$('result').innerHTML=`<p class="result-message error">${UI.escape(error.message)}</p>`;}
+    finally{buttons.forEach(button=>button.disabled=false);active.removeAttribute('aria-busy');}
+  }
+  $('query').addEventListener('click',()=>action('query'));
+  $('inspect').addEventListener('click',()=>action('inspect'));
+  $('invalidate').addEventListener('click',()=>action('invalidate'));
+  $('browse').addEventListener('click',()=>browse('0'));
+  $('nextPage').addEventListener('click',()=>browse(nextCursor));
+  $('purge').addEventListener('click',purge);
+  $('loadDeadLetters').addEventListener('click',loadDeadLetters);
+  $('table').addEventListener('change',resetBrowse);
+  $('scanCount').addEventListener('change',resetBrowse);
+  overview().then(()=>notice('已连接。状态每 3 秒更新。')).catch(overviewError);
+  setInterval(()=>overview().catch(overviewError),3000);
+</script>
+</body>
+</html>

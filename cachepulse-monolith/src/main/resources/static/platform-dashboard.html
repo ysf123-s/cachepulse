@@ -1,0 +1,832 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>数据库变更处理平台控制台</title>
+  <style>
+    :root{font-family:"Microsoft YaHei",system-ui,sans-serif;color:#233249;background:#f3f6fa;font-size:14px}
+    *{box-sizing:border-box}body{margin:0}main{max-width:1200px;margin:auto;padding:28px 20px}
+    header{display:flex;justify-content:space-between;align-items:center;gap:18px;margin-bottom:20px}
+    h1{font-size:24px;letter-spacing:.02em;margin:0 0 6px}h2{font-size:16px;margin:0 0 14px}
+    p{line-height:1.6;margin:4px 0;color:#617087}.muted{font-size:12px;color:#617087}
+    .cards{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:20px}
+    .card,section{background:white;border:1px solid #dfe6ef;border-radius:10px;padding:18px}
+    .card strong{display:block;font-size:24px;margin:8px 0 2px;color:#174ea6}.card span{font-size:12px;color:#617087}
+    section{margin-bottom:18px}.scroll{overflow-x:auto}table{width:100%;border-collapse:collapse;white-space:nowrap}
+    th,td{text-align:left;padding:10px 12px;border-bottom:1px solid #edf0f5;font-size:13px}
+    th{color:#617087;font-weight:500;background:#f8faff}tbody tr:last-child td{border-bottom:0}
+    label{display:block;font-size:12px;margin-bottom:6px;color:#617087}input,select,button{font:inherit;border-radius:6px}
+    input,select{width:100%;padding:8px 10px;border:1px solid #cbd5e3;background:white;color:#233249}
+    .controls{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px;margin-bottom:14px}
+    .buttons{display:flex;flex-wrap:wrap;gap:8px}button{cursor:pointer;padding:8px 14px;border:1px solid #bdcce1;background:white;color:#254c80}
+    button.primary{background:#245dc1;border-color:#245dc1;color:white}button.danger{color:#ae3a39;border-color:#e5c5c5}
+    button.success{background:#1e7e34;border-color:#1e7e34;color:white}
+    button:disabled{opacity:.5;cursor:wait}button:focus-visible,input:focus-visible,select:focus-visible{outline:2px solid #9cbcf0}
+    pre{white-space:pre-wrap;overflow-wrap:anywhere;background:#f7f9fc;border:1px solid #e3e9f1;padding:14px;border-radius:6px;font:12px/1.6 Consolas,monospace;max-height:350px;overflow:auto;margin:12px 0 0}
+    #notice{padding:10px 14px;border-radius:6px;background:#eaf2ff;color:#254c80;margin-bottom:16px}
+    #notice.error{background:#fbeceb;color:#9c2f2f}
+    .nav-tabs{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:16px;border-bottom:2px solid #dfe6ef}
+    .tab-btn{padding:8px 16px;border:none;background:transparent;color:#617087;font-weight:600;cursor:pointer;border-bottom:3px solid transparent}
+    .tab-btn.active{color:#245dc1;border-bottom-color:#245dc1;background:white}
+    .tab-content{display:none}.tab-content.active{display:block}
+    .tag{display:inline-block;padding:2px 6px;border-radius:4px;font-size:11px;font-weight:600}
+    .tag.insert{background:#e6f4ea;color:#137333}.tag.update{background:#e8f0fe;color:#1a73e8}.tag.delete{background:#fce8e6;color:#c5221f}
+    .tag.success{background:#e6f4ea;color:#137333}.tag.failed{background:#fce8e6;color:#c5221f}.tag.retry{background:#fef7e0;color:#b06000}
+    .event-detail{margin-top:18px;padding:18px;border:1px solid #dfe6ef;border-radius:8px;background:#fbfcfe;scroll-margin-top:20px}
+    .event-detail h3{font-size:14px;margin:18px 0 10px}.detail-id{display:flex;align-items:center;gap:10px}
+    .detail-id input{min-width:0;font-family:Consolas,monospace}.detail-id button{flex-shrink:0}
+    .detail-meta{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:14px;margin:18px 0}
+    .detail-meta dt{font-size:12px;color:#617087}.detail-meta dd{margin:5px 0 0;line-height:1.6;overflow-wrap:anywhere}
+    .comparison{table-layout:fixed;white-space:normal}.comparison th:first-child{width:24%}
+    .comparison th,.comparison td{white-space:pre-wrap;overflow-wrap:anywhere;vertical-align:top}
+    .event-detail details{margin-top:18px;border-top:1px solid #dfe6ef;padding-top:14px}
+    .event-detail summary{cursor:pointer;font-weight:600;color:#254c80}
+    @media(max-width:760px){.cards,.detail-meta{grid-template-columns:repeat(2,1fr)}.detail-id{flex-wrap:wrap}.detail-id input{flex-basis:100%}}
+  </style>
+  <link rel="stylesheet" href="dashboard-ui.css">
+</head>
+<body>
+<main>
+  <nav style="margin-bottom:14px;"><a href="cache-dashboard.html" style="color:#245dc1;font-weight:600;text-decoration:none;">← 返回 缓存同步控制台</a></nav>
+  <header>
+    <div>
+      <h1>数据库变更处理平台</h1>
+      <p>统一变更归档历史、辅助逆向恢复、条件订阅与可靠投递。</p>
+    </div>
+    <span class="muted" id="statusTime">正在刷新…</span>
+  </header>
+
+  <div id="notice" role="status" aria-live="polite">就绪。</div>
+  <details id="errorTechnical" class="technical" hidden><summary>错误技术详情</summary><pre id="errorRaw"></pre></details>
+
+  <div class="cards">
+    <div class="card"><span>登记接入表</span><strong id="cardTables">—</strong><span>受控采集范围</span></div>
+    <div class="card"><span>本页历史事件</span><strong id="cardEvents">—</strong><span>更多历史可通过下一页查看</span></div>
+    <div class="card"><span>有效条件订阅</span><strong id="cardSubs">—</strong><span>多端规则投递</span></div>
+    <div class="card"><span>当前页待处理/重试</span><strong id="cardTasks">—</strong><span>按投递列表当前筛选统计</span></div>
+  </div>
+
+  <div class="nav-tabs">
+    <button class="tab-btn active" onclick="showTab('tab-events', this)">变更历史查找</button>
+    <button class="tab-btn" onclick="showTab('tab-recovery', this)">恢复 SQL 辅助</button>
+    <button class="tab-btn" onclick="showTab('tab-subs', this)">条件订阅管理</button>
+    <button class="tab-btn" onclick="showTab('tab-deliveries', this)">投递记录与重试</button>
+    <button class="tab-btn" onclick="showTab('tab-replay', this)">历史事件重放</button>
+    <button class="tab-btn" onclick="showTab('tab-tables', this)">接入表与快照</button>
+    <button id="stockoutDemoTab" class="tab-btn" hidden onclick="showTab('tab-stockout', this); runAction(this, resetStockouts)">缺货处理待办（示例）</button>
+  </div>
+
+  <!-- TAB 1: 变更历史查找 -->
+  <div id="tab-events" class="tab-content active">
+    <section>
+      <h2>变更事件检索</h2>
+      <div class="controls">
+        <div><label for="filterTable">业务表</label><select id="filterTable"><option value="">全部表</option></select></div>
+        <div><label for="filterKey">主键值</label><input id="filterKey" placeholder="精确主键值"></div>
+        <div><label for="filterOp">操作类型</label><select id="filterOp"><option value="">全部</option><option value="INSERT">新增</option><option value="UPDATE">修改</option><option value="DELETE">删除</option></select></div>
+        <div><label for="filterFrom">开始时间</label><input type="datetime-local" id="filterFrom"></div>
+        <div><label for="filterTo">结束时间</label><input type="datetime-local" id="filterTo"></div>
+        <div style="display:flex;align-items:flex-end;"><button class="primary" onclick="runAction(this, () => resetSearch())">查询历史</button></div>
+      </div>
+      <div class="scroll">
+        <table>
+          <thead><tr><th>序号</th><th>事件 ID</th><th>表名</th><th>操作</th><th>主键</th><th>发生时间</th><th>位点</th><th>操作</th></tr></thead>
+          <tbody id="eventList"><tr><td colspan="8" class="muted">点击查询加载历史事件</td></tr></tbody>
+        </table>
+      </div>
+      <div class="buttons" style="margin-top:12px;">
+        <button id="btnPrevCursor" disabled onclick="runAction(this, () => prevCursor())">上一页</button>
+        <button id="btnNextCursor" disabled onclick="runAction(this, () => nextCursor())">下一页</button>
+      </div>
+      <p id="eventDetailEmpty" class="muted" style="margin-top:16px;">点击列表“详情”查看事件 ID 和字段变化。</p>
+      <div id="eventDetail" class="event-detail" hidden>
+        <h2>变更详情</h2>
+        <label for="detailEventId">事件 ID</label>
+        <div class="detail-id">
+          <input id="detailEventId" readonly>
+          <button onclick="copyEventId()">复制事件 ID</button>
+        </div>
+        <p id="copyEventIdStatus" class="muted" role="status"></p>
+        <dl class="detail-meta">
+          <div><dt>业务表</dt><dd id="detailTable"></dd></div>
+          <div><dt>操作</dt><dd id="detailOperation"></dd></div>
+          <div><dt>主键</dt><dd id="detailPrimaryKey"></dd></div>
+          <div><dt>发生时间</dt><dd id="detailTime"></dd></div>
+        </dl>
+        <h3>字段变化</h3>
+        <p class="muted">仅列出发生变化的字段；“不存在”表示该侧没有字段，NULL 表示数据库空值。</p>
+        <div class="scroll">
+          <table class="comparison">
+            <thead><tr><th>字段</th><th>变更前</th><th>变更后</th></tr></thead>
+            <tbody id="detailChanges"></tbody>
+          </table>
+        </div>
+        <details id="eventTechnicalDetails">
+          <summary>技术详情</summary>
+          <dl id="eventTechnicalMeta" class="detail-meta"></dl>
+          <h3>完整 JSON（含字段类型与恢复评估）</h3>
+          <pre id="eventRawJson"></pre>
+        </details>
+      </div>
+    </section>
+  </div>
+
+  <!-- TAB 2: 恢复辅助 -->
+  <div id="tab-recovery" class="tab-content">
+    <section>
+      <h2>逆向恢复计划生成与预览</h2>
+      <p class="muted">根据单条变更事件生成逆向 SQL，经过只读预检查检测冲突，提供预览与文件下载（不在线执行）。</p>
+      <div class="controls" style="grid-template-columns:1fr auto;">
+        <div><label for="recoveryEventId">事件 ID (64位 SHA-256)</label><input id="recoveryEventId" placeholder="从历史事件列表复制或由下方自动带入"></div>
+        <div style="display:flex;align-items:flex-end;"><button class="primary" onclick="runAction(this, () => generatePlan())">生成恢复计划</button></div>
+      </div>
+      <div id="planResult" class="result-panel" style="display:none;margin-top:14px;">
+        <div id="planOverview"></div>
+        <label for="planIdInput">恢复计划 ID</label><div class="copy-row"><input id="planIdInput" readonly><button onclick="UI.copy('planIdInput','planCopyStatus')">复制计划 ID</button></div><p id="planCopyStatus" class="muted" role="status"></p>
+        <p><strong id="planExecutable">—</strong></p><p id="planReason">—</p>
+        <div class="buttons" style="margin:10px 0;">
+          <button class="success" id="btnDownloadSql" onclick="downloadSql()">下载恢复 SQL 文件</button>
+        </div>
+        <p id="planSqlHelp" class="muted">核对下方 SQL 后，可下载到数据库客户端手动执行。</p>
+        <pre id="planSql"></pre>
+        <details id="planTechnical" class="technical"><summary>检查记录与技术详情</summary><pre id="planCheckSummary"></pre></details>
+      </div>
+    </section>
+  </div>
+
+  <!-- TAB 3: 条件订阅管理 -->
+  <div id="tab-subs" class="tab-content">
+    <section>
+      <h2>已有订阅规则</h2>
+      <div class="buttons" style="margin-bottom:12px;"><button onclick="runAction(this, async () => { await loadSubscriptions(); notice('订阅规则已刷新', false); })">刷新规则</button></div>
+      <div class="scroll">
+        <table>
+          <thead><tr><th>订阅 ID</th><th>表名</th><th>目标别名</th><th>操作类型</th><th>限定变更字段</th><th>过滤条件</th><th>版本</th><th>状态</th><th>操作</th></tr></thead>
+          <tbody id="subList"><tr><td colspan="9" class="muted">加载中…</td></tr></tbody>
+        </table>
+      </div>
+    </section>
+    <section>
+      <h2 id="subFormTitle">新建条件订阅</h2>
+      <p class="muted">多个变更字段必须全部变化才匹配。停用仅影响后续建任务，已生成任务继续投递。</p>
+      <div class="controls">
+        <div><label for="newSubTable">业务表</label><select id="newSubTable"></select></div>
+        <div><label for="newSubTarget">目标别名</label><select id="newSubTarget"></select></div>
+        <div><label for="newSubOps">操作类型</label><input id="newSubOps" value="UPDATE" placeholder="INSERT,UPDATE,DELETE"><p class="muted">INSERT 新增，UPDATE 修改，DELETE 删除；多种操作用逗号分隔。</p></div>
+        <div><label for="newSubChanged">哪些字段必须发生变化（仅修改事件）</label><input id="newSubChanged" placeholder="如 available_qty；留空不限制"></div>
+        <div><label for="newSubFilterField">检查变更后的哪个字段</label><input id="newSubFilterField" placeholder="如 available_qty；留空不筛选"></div>
+        <div><label for="newSubFilterVal">过滤期望值（保留空格，留空表示空字符串）</label><input id="newSubFilterVal" placeholder="如 0"><label><input type="checkbox" id="newSubFilterNull"> 值为 NULL</label></div>
+      </div>
+      <div class="buttons"><button class="primary" id="btnSaveSub" onclick="runAction(this, () => createSubscription())">创建订阅</button><button onclick="cancelEdit()">取消编辑</button></div>
+    </section>
+  </div>
+
+  <!-- TAB 4: 投递记录与重试 -->
+  <div id="tab-deliveries" class="tab-content">
+    <section>
+      <h2>HTTP 投递任务列表</h2>
+      <div class="controls">
+        <div><label for="delivStatus">状态筛选</label><select id="delivStatus"><option value="">全部</option><option value="PENDING">等待处理</option><option value="IN_FLIGHT">正在投递</option><option value="SUCCEEDED">投递成功</option><option value="RETRY_WAIT">等待重试</option><option value="FAILED">处理失败</option></select></div>
+        <div><label for="delivEventId">事件 ID</label><input id="delivEventId" placeholder="留空查看全部事件"></div>
+        <div><label for="delivSubscriptionId">订阅 ID</label><input id="delivSubscriptionId" placeholder="留空查看全部订阅"></div>
+        <div><label for="delivRoundId">重放任务 ID</label><input id="delivRoundId" placeholder="留空包含初次投递"></div>
+        <div style="display:flex;align-items:flex-end;"><button class="primary" onclick="runAction(this, () => resetDeliveries())">刷新任务</button></div>
+      </div>
+      <div class="scroll">
+        <table>
+          <thead><tr><th>任务 ID</th><th>Delivery ID</th><th>目标别名</th><th>轮次</th><th>状态</th><th>累计尝试 / 当前上限</th><th>下次重试时间</th><th>最近错误</th><th>操作</th></tr></thead>
+          <tbody id="deliveryList"><tr><td colspan="9" class="muted">加载中…</td></tr></tbody>
+        </table>
+      </div>
+      <div class="controls">
+        <button id="btnPrevDelivery" onclick="runAction(this, () => prevDelivery())" disabled>上一页</button>
+        <button id="btnNextDelivery" onclick="runAction(this, () => nextDelivery())" disabled>下一页</button>
+      </div>
+      <p id="deliveryFeedback" class="result-updated" role="status"></p>
+      <p class="muted">手动重试追加一次投递，保留 Delivery ID 和历次记录；本次失败后不再自动重试。</p>
+      <div id="attemptDetail" class="result-panel"><p class="muted">点击“查看尝试”，查看每次通知的结果、耗时和错误原因。</p></div>
+    </section>
+  </div>
+
+  <!-- TAB 5: 历史事件重放 -->
+  <div id="tab-replay" class="tab-content">
+    <section>
+      <h2>创建事件重放任务</h2>
+      <p class="muted">选择历史变更和订阅，符合订阅条件的事件将重新发送 HTTP 通知。一次重放为一个独立轮次。</p>
+      <div class="controls">
+        <div><label for="replayRequestKey">本轮请求标识（自动生成）</label><input id="replayRequestKey" placeholder="自动生成或手动输入"></div>
+        <div><label for="replaySubSelect">目标启用订阅</label><select id="replaySubSelect"></select></div>
+      </div>
+      <div style="margin-bottom:12px;">
+        <label for="replayEventIds">待重放事件 ID（每行或逗号分隔，最多 100 个）</label>
+        <textarea id="replayEventIds" rows="4" style="width:100%;padding:8px;border:1px solid #cbd5e3;border-radius:6px;font-family:monospace;"></textarea>
+      </div>
+      <div class="buttons"><button class="primary" onclick="runAction(this, () => submitReplay())">提交重放</button><button onclick="newReplayRound()">新建一轮</button></div>
+      <p class="muted">重复提交同一请求标识会返回同一任务；需要再次补发时，先点击“新建一轮”。</p>
+      <div id="replayResult" class="result-panel"><p class="muted">提交后会显示匹配、跳过及实际通知结果。</p></div>
+      <div class="controls" style="margin-top:14px;"><div><label for="replayJobId">查询已有重放任务 ID</label><input id="replayJobId" placeholder="提交后自动填入，也可粘贴已有任务 ID"></div><button onclick="runAction(this, () => refreshReplay())">查询进度与投递结果</button><button onclick="runAction(this, () => viewReplayDeliveries())">查看本轮投递明细</button></div>
+      <p id="replayFeedback" class="result-updated" role="status"></p>
+    </section>
+  </div>
+
+  <!-- TAB 6: 接入表与快照 -->
+  <div id="tab-tables" class="tab-content">
+    <section>
+      <h2>已登记业务表与恢复能力</h2>
+      <div class="buttons"><button onclick="runAction(this, () => loadConsumerStatus())">刷新消费状态</button></div>
+      <div id="consumerStatus" class="result-panel"><p class="muted">点击刷新，查看缓存同步和变更归档的运行情况。</p></div>
+      <div class="scroll">
+        <table>
+          <thead><tr><th>表名</th><th>主键</th><th>快照 ID</th><th>失效情况</th><th>恢复能力评估</th></tr></thead>
+          <tbody id="tableList"><tr><td colspan="5" class="muted">加载中…</td></tr></tbody>
+        </table>
+      </div>
+    </section>
+  </div>
+  <div id="tab-stockout" class="tab-content">
+    <section>
+      <h2>缺货处理待办</h2>
+      <p class="muted">库存从正数降为 0 时，由通知创建待办。请先核实当前库存，再标记已处理；此操作不修改库存。同一来源事件的重试和重放不会重复创建待办。</p>
+      <div class="controls">
+        <div><label for="stockoutStatus">处理状态</label><select id="stockoutStatus"><option value="PENDING">待处理</option><option value="HANDLED">已处理</option><option value="">全部</option></select></div>
+        <div><label for="stockoutEventId">来源事件 ID</label><input id="stockoutEventId" placeholder="留空查看全部"></div>
+        <div style="display:flex;align-items:flex-end"><button class="primary" onclick="runAction(this, () => resetStockouts())">查询待办</button></div>
+      </div>
+      <div class="scroll"><table>
+        <thead><tr><th>待办 ID</th><th>商品 SKU</th><th>库存记录 ID</th><th>缺货发生时间</th><th>处理状态</th><th>处理时间</th><th>操作</th></tr></thead>
+        <tbody id="stockoutList"><tr><td colspan="7">点击查询待办</td></tr></tbody>
+      </table></div>
+      <div class="buttons" style="margin-top:12px"><button id="stockoutPrev" onclick="runAction(this, () => prevStockout())" disabled>上一页</button><button id="stockoutNext" onclick="runAction(this, () => nextStockout())" disabled>下一页</button></div>
+      <p id="stockoutFeedback" class="result-updated" role="status"></p>
+    </section>
+  </div>
+</main>
+
+<script src="dashboard-ui.js"></script>
+<script>
+const UI = window.DashboardUI;
+let currentPlanId = null;
+let currentCursor = null;
+let followingCursor = null;
+let previousCursors = [];
+let deliveryCursor = null;
+let followingDeliveryCursor = null;
+let previousDeliveryCursors = [];
+let deliveryTasks = [];
+let stockoutCursor = null;
+let stockoutDemoEnabled = false;
+let followingStockoutCursor = null;
+let previousStockoutCursors = [];
+let subscriptions = [];
+let editingSub = null;
+const esc = value => String(value ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+
+function showTab(tabId, btn) {
+  document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
+  document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
+  document.getElementById(tabId).classList.add('active');
+  btn.classList.add('active');
+}
+
+function notice(msg, isError, details) {
+  const el = document.getElementById('notice');
+  el.textContent = msg;
+  el.className = isError ? 'error' : '';
+  document.getElementById('errorTechnical').hidden = !details;
+  document.getElementById('errorTechnical').open = false;
+  document.getElementById('errorRaw').textContent = details || '';
+}
+
+function runAction(button, action) { return UI.run(button, action, notice); }
+
+async function api(url, opts) {
+  try {
+    const res = await fetch(url, opts);
+    if (!res.ok) {
+      const err = await res.text();
+      throw UI.requestError(res.status, err);
+    }
+    const type = res.headers.get('content-type') || '';
+    return type.includes('application/json') ? res.json() : res.text();
+  } catch(e) {
+    notice(e.message, true, e.details);
+    throw e;
+  }
+}
+
+async function init() {
+  document.getElementById('statusTime').textContent = new Date().toLocaleTimeString();
+  document.getElementById('replayRequestKey').value = 'req-' + Date.now();
+  await loadTables();
+  const examples = await api('/platform/examples');
+  stockoutDemoEnabled = examples.includes('stockout');
+  document.getElementById('stockoutDemoTab').hidden = !stockoutDemoEnabled;
+  const targets = await api('/platform/targets');
+  document.getElementById('newSubTarget').innerHTML = targets.map(name => `<option value="${esc(name)}">${esc(name)}</option>`).join('');
+  await loadSubscriptions();
+  await loadDeliveries();
+  const eventId = new URLSearchParams(window.location.search).get('eventId');
+  if (eventId) await openEvent(eventId);
+}
+
+async function loadConsumerStatus() {
+  const data = await api('/platform/consumers/status');
+  const cache = data.cache, archive = data.archive;
+  const error = info => info ? `<p class="result-message warning">最近记录的异常：${esc(info.message)}（${UI.date(info.occurredAt)}）</p>` : '<p class="muted">本次进程没有记录异常。</p>';
+  const panel = document.getElementById('consumerStatus');
+  panel.innerHTML = '<h3>缓存同步</h3>' + UI.facts([
+    ['服务', cache.serviceStarted ? '已启动' : '未启动'],
+    ['活跃消费者 / 配置数', `${cache.activeConsumers} / ${cache.configuredConsumers}`],
+    ['最近成功确认', UI.date(cache.lastSuccessAt)]
+  ]) + error(cache.lastError) + '<h3>变更归档</h3>' + UI.facts([
+    ['服务', archive.serviceStarted ? '已启动' : '未启动'],
+    ['消费线程', archive.activeConsumer ? '运行中' : '未运行'],
+    ['最近成功确认', UI.date(archive.lastSuccessAt)],
+    ['已确认新事件', archive.acknowledgedNewRows], ['已确认重复事件', archive.acknowledgedDuplicateRows]
+  ]) + error(archive.lastError) + '<p class="muted">异常栏保留最近一次记录；当前消费进展可结合成功确认时间判断。</p>'
+    + `<p class="result-updated">查询完成于 ${new Date().toLocaleTimeString()}</p>` + UI.technical(data);
+  notice('消费状态已更新', false);
+}
+
+async function openEvent(eventId) {
+  showTab('tab-events', document.querySelectorAll('.tab-btn')[0]);
+  await viewDetail(eventId);
+}
+
+async function loadTables() {
+  const tables = await api('/platform/tables');
+  document.getElementById('cardTables').textContent = tables.length;
+  const tbody = document.getElementById('tableList');
+  const selFilter = document.getElementById('filterTable');
+  const selNewSub = document.getElementById('newSubTable');
+  tbody.innerHTML = '';
+  selFilter.innerHTML = '<option value="">全部表</option>';
+  selNewSub.innerHTML = '';
+
+  tables.forEach(t => {
+    selFilter.innerHTML += `<option value="${t.schema.table}">${t.schema.table}</option>`;
+    selNewSub.innerHTML += `<option value="${t.schema.table}">${t.schema.table}</option>`;
+    tbody.innerHTML += `<tr>
+      <td><strong>${t.schema.table}</strong></td>
+      <td>${t.schema.primaryKey}</td>
+      <td><code>${t.schema.snapshotId.substring(0, 16)}…</code></td>
+      <td>${esc(t.invalidatedReason || '未发现 DDL 失效')}</td>
+      <td><div class="recovery-assessment">
+        ${t.recoveryAvailable ? '<span class="status-tag good">可生成恢复计划</span>' : '<span class="status-tag waiting">需要核实</span>'}
+        <p>${esc(UI.reason(t.reason))}</p>
+        <button onclick="runAction(this, () => confirmBaseline('${t.schema.table}'))">核实并建立恢复基线</button>
+      </div></td>
+    </tr>`;
+  });
+}
+
+async function confirmBaseline(table) {
+  if (!window.confirm('建立基线后，仅该 binlog 位点之后且结构相符的事件可用于恢复辅助。确认继续？')) { notice('已取消建立恢复基线', false); return; }
+  const baseline = await api(`/platform/tables/${table}/recovery-baseline`, {method:'POST'});
+  notice(`基线已核实：${baseline.binlogFile}:${baseline.position}`, false);
+  await loadTables();
+}
+
+async function resetSearch() { currentCursor = null; previousCursors = []; await loadEvents(); }
+async function nextCursor() {
+  if (!followingCursor) return;
+  previousCursors.push(currentCursor); currentCursor = followingCursor; await loadEvents();
+}
+async function prevCursor() {
+  if (!previousCursors.length) return;
+  currentCursor = previousCursors.pop(); await loadEvents();
+}
+
+async function loadEvents() {
+  const table = document.getElementById('filterTable').value;
+  const key = document.getElementById('filterKey').value.trim();
+  const op = document.getElementById('filterOp').value;
+  let q = `/platform/events?limit=20`;
+  if (table) q += `&table=${table}`;
+  if (key) q += `&key=${encodeURIComponent(key)}`;
+  if (op) q += `&operation=${op}`;
+  if (currentCursor) q += `&cursor=${currentCursor}`;
+  for (const [id, name] of [['filterFrom','from'], ['filterTo','to']]) {
+    const value = document.getElementById(id).value;
+    if (value) q += `&${name}=${new Date(value).getTime()}`;
+  }
+
+  const page = await api(q);
+  followingCursor = page.nextCursor;
+  document.getElementById('btnNextCursor').disabled = !followingCursor;
+  document.getElementById('btnPrevCursor').disabled = !previousCursors.length;
+  document.getElementById('cardEvents').textContent = page.items.length;
+  const tbody = document.getElementById('eventList');
+  tbody.innerHTML = '';
+  if (page.items.length === 0) {
+    tbody.innerHTML = '<tr><td colspan="8" class="muted">无符合条件的事件</td></tr>';
+    notice('历史查询完成：没有符合条件的事件', false);
+    return;
+  }
+
+  page.items.forEach((it, idx) => {
+    tbody.innerHTML += `<tr>
+      <td>${it.sequence}</td>
+      <td><code>${it.eventId.substring(0, 12)}…</code></td>
+      <td>${it.table}</td>
+      <td><span class="tag ${it.operation.toLowerCase()}">${UI.status(it.operation)}</span></td>
+      <td>${esc(it.primaryKeyValue)}</td>
+      <td>${new Date(it.eventTimeMillis).toLocaleTimeString()}</td>
+      <td><button onclick="runAction(this, () => viewDetail('${it.eventId}', true))">查看源位点</button></td>
+      <td>
+        <button onclick="runAction(this, () => viewDetail('${it.eventId}'))">详情</button>
+        <button onclick="runAction(this, () => viewEventDeliveries('${it.eventId}'))">投递</button>
+        <button onclick="selectForReplay('${it.eventId}')">重放</button>
+        ${stockoutDemoEnabled && it.table === 'inventory' ? `<button onclick="runAction(this, () => viewEventStockouts('${it.eventId}'))">缺货待办</button>` : ''}
+        <button class="primary" onclick="runAction(this, () => selectForRecovery('${it.eventId}'))">恢复</button>
+      </td>
+    </tr>`;
+  });
+  notice(`历史查询完成：本页 ${page.items.length} 条${page.nextCursor ? '，可继续下一页' : ''}`, false);
+}
+
+async function viewDetail(eventId, showTechnical = false) {
+  const detail = await api(`/platform/events/${eventId}`);
+  const {summary, event, changes} = detail;
+  document.getElementById('detailEventId').value = summary.eventId;
+  document.getElementById('copyEventIdStatus').textContent = '';
+  document.getElementById('detailTable').textContent = `${summary.database}.${summary.table}`;
+  document.getElementById('detailOperation').textContent = ({INSERT:'新增',UPDATE:'修改',DELETE:'删除'})[summary.operation] + `（${summary.operation}）`;
+  document.getElementById('detailPrimaryKey').textContent = `${summary.primaryKey} = ${summary.primaryKeyValue}`;
+  document.getElementById('detailTime').textContent = new Date(summary.eventTimeMillis).toLocaleString();
+  const displayValue = (present, value) => {
+    if (!present) return '<span class="muted">不存在</span>';
+    if (value === null) return '<span class="muted">NULL</span>';
+    if (value === '') return '<span class="muted">空字符串</span>';
+    return esc(typeof value === 'object' ? JSON.stringify(value) : String(value));
+  };
+  document.getElementById('detailChanges').innerHTML = changes.map(change => `<tr>
+    <td>${esc(change.field)}</td><td>${displayValue(change.beforePresent, change.before)}</td><td>${displayValue(change.afterPresent, change.after)}</td>
+  </tr>`).join('') || '<tr><td colspan="3" class="muted">没有字段值变化。</td></tr>';
+  document.getElementById('eventTechnicalMeta').innerHTML = [
+    ['来源', summary.sourceId], ['归档序号', summary.sequence],
+    ['Kafka 主题', detail.topic], ['Kafka 分区', detail.partition], ['Kafka Offset', detail.offset],
+    ['Binlog 文件', event.binlogFile], ['Binlog 位点', event.binlogPosition],
+    ['归档时间', new Date(summary.archivedAt).toLocaleString()]
+  ].map(([label, value]) => `<div><dt>${label}</dt><dd>${esc(value)}</dd></div>`).join('');
+  document.getElementById('eventRawJson').textContent = JSON.stringify(detail, null, 2);
+  const technical = document.getElementById('eventTechnicalDetails');
+  technical.open = showTechnical;
+  document.getElementById('eventDetailEmpty').hidden = true;
+  const panel = document.getElementById('eventDetail');
+  panel.hidden = false;
+  (showTechnical ? technical : panel).scrollIntoView({behavior: 'smooth', block: 'start'});
+  notice(showTechnical ? '源位点已显示在技术详情中' : '事件详情已加载', false);
+}
+
+async function copyEventId() {
+  const status = document.getElementById('copyEventIdStatus');
+  try {
+    await navigator.clipboard.writeText(document.getElementById('detailEventId').value);
+    status.textContent = '已复制事件 ID。';
+  } catch (error) {
+    status.textContent = '复制失败：' + error.message + '。可以选中上方事件 ID 手动复制。';
+  }
+}
+
+async function selectForRecovery(eventId) {
+  document.getElementById('recoveryEventId').value = eventId;
+  showTab('tab-recovery', document.querySelectorAll('.tab-btn')[1]);
+  await generatePlan();
+}
+
+async function generatePlan() {
+  const eventId = document.getElementById('recoveryEventId').value.trim();
+  if (!eventId) { notice('请输入 eventId', true); return; }
+  notice('正在生成恢复计划…', false);
+  const plan = await api('/platform/recovery-plans', {
+    method: 'POST',
+    headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify({eventId})
+  });
+  currentPlanId = plan.planId;
+  document.getElementById('planIdInput').value = plan.planId;
+  document.getElementById('planCopyStatus').textContent = '';
+  document.getElementById('planOverview').innerHTML = UI.facts([
+    ['业务表', `${plan.database}.${plan.table}`], ['原操作', UI.status(plan.eventType)],
+    ['恢复操作', UI.status(plan.reverseType)], ['记录主键', `${plan.primaryKeyColumn} = ${plan.primaryKeyValue}`]
+  ]);
+  document.getElementById('planExecutable').textContent = plan.executable ? '预检查通过，执行前仍需复核' : '不满足恢复条件，请查看原因';
+  document.getElementById('planExecutable').style.color = plan.executable ? '#137333' : '#c5221f';
+  document.getElementById('planReason').textContent = UI.reason(plan.reason);
+  document.getElementById('planSql').textContent = plan.generatedSql;
+  const hasSql = !plan.generatedSql.startsWith('-- Recovery SQL unavailable');
+  document.getElementById('btnDownloadSql').disabled = !hasSql;
+  document.getElementById('planSql').hidden = !hasSql;
+  document.getElementById('planSqlHelp').textContent = hasSql ? '核对下方 SQL 后，可下载到数据库客户端手动执行。' : '当前没有可用的恢复 SQL，请先处理上方原因。';
+  document.getElementById('planCheckSummary').textContent = JSON.stringify({...plan,checkSummary:JSON.parse(plan.checkSummary)}, null, 2);
+  document.getElementById('planTechnical').open = false;
+  document.getElementById('planResult').style.display = 'block';
+  notice('恢复计划已生成', false);
+  document.getElementById('planResult').scrollIntoView({behavior:'smooth',block:'start'});
+}
+
+function downloadSql() {
+  if (!currentPlanId) return;
+  window.open(`/platform/recovery-plans/${currentPlanId}/sql`, '_blank');
+}
+
+async function loadSubscriptions() {
+  const subs = await api('/platform/subscriptions');
+  subscriptions = subs;
+  document.getElementById('cardSubs').textContent = subs.filter(s => s.enabled).length;
+  const tbody = document.getElementById('subList');
+  const selReplay = document.getElementById('replaySubSelect');
+  tbody.innerHTML = '';
+  selReplay.innerHTML = '';
+
+  subs.forEach(s => {
+    if (s.enabled) selReplay.innerHTML += `<option value="${s.subscriptionId}">${esc(s.table)} → ${esc(s.targetName)}（${s.operations.split(',').map(UI.status).join('、')}）</option>`;
+    tbody.innerHTML += `<tr>
+      <td><code title="${s.subscriptionId}">${s.subscriptionId.substring(0, 10)}…</code></td>
+      <td>${esc(s.table)}</td>
+      <td>${esc(s.targetName)}</td>
+      <td>${s.operations.split(',').map(UI.status).join('、')}</td>
+      <td>${esc(s.changedFields || '—')}</td>
+      <td>${esc(s.filterField ? s.filterField + ' = ' + (s.filterValue === null ? 'NULL' : JSON.stringify(s.filterValue)) : '不限制')}</td>
+      <td>v${s.ruleVersion}</td>
+      <td>${s.enabled ? '<span class="tag success">启用</span>' : '<span class="tag delete">停用</span>'}</td>
+      <td><button onclick="runAction(this, () => toggleSub('${s.subscriptionId}', ${!s.enabled}, ${s.ruleVersion}))">${s.enabled ? '停用' : '启用'}</button><button onclick="editSub('${s.subscriptionId}')">编辑</button></td>
+    </tr>`;
+  });
+}
+
+async function toggleSub(id, targetState, ver) {
+  await api(`/platform/subscriptions/${id}/enabled?expectedVersion=${ver}`, {
+    method: 'PUT',
+    headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify({enabled: targetState})
+  });
+  notice(`订阅已${targetState ? '启用' : '停用'}`, false);
+  await loadSubscriptions();
+}
+
+function editSub(id) {
+  editingSub = subscriptions.find(s => s.subscriptionId === id);
+  const s = editingSub;
+  for (const [field, value] of Object.entries({newSubTable:s.table,newSubTarget:s.targetName,newSubOps:s.operations,
+    newSubChanged:s.changedFields || '',newSubFilterField:s.filterField || '',newSubFilterVal:s.filterValue ?? ''})) {
+    document.getElementById(field).value = value;
+  }
+  document.getElementById('newSubFilterNull').checked = s.filterField != null && s.filterValue == null;
+  document.getElementById('subFormTitle').textContent = '编辑订阅 v' + s.ruleVersion;
+  document.getElementById('btnSaveSub').textContent = '保存修改';
+  document.getElementById('subFormTitle').scrollIntoView({behavior:'smooth',block:'start'});
+}
+function cancelEdit() {
+  editingSub = null;
+  document.getElementById('subFormTitle').textContent = '新建条件订阅';
+  document.getElementById('btnSaveSub').textContent = '创建订阅';
+}
+
+async function createSubscription() {
+  const table = document.getElementById('newSubTable').value;
+  const targetName = document.getElementById('newSubTarget').value.trim();
+  const ops = document.getElementById('newSubOps').value.split(',').map(s => s.trim()).filter(Boolean);
+  const changed = document.getElementById('newSubChanged').value.split(',').map(s => s.trim()).filter(Boolean);
+  const filterF = document.getElementById('newSubFilterField').value.trim();
+  const filterV = document.getElementById('newSubFilterVal').value;
+
+  await api(editingSub ? `/platform/subscriptions/${editingSub.subscriptionId}?expectedVersion=${editingSub.ruleVersion}` : '/platform/subscriptions', {
+    method: editingSub ? 'PUT' : 'POST',
+    headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify({
+      table, targetName, operations: ops,
+      changedFields: changed.length ? changed : null,
+      filterField: filterF || null,
+      filterValue: filterF && !document.getElementById('newSubFilterNull').checked ? filterV : null,
+      enabled: editingSub ? editingSub.enabled : true
+    })
+  });
+  notice('订阅已保存', false);
+  cancelEdit();
+  await loadSubscriptions();
+}
+
+async function resetDeliveries() {
+  deliveryCursor = null; previousDeliveryCursors = []; await loadDeliveries();
+}
+async function nextDelivery() {
+  if (!followingDeliveryCursor) return;
+  previousDeliveryCursors.push(deliveryCursor); deliveryCursor = followingDeliveryCursor; await loadDeliveries();
+}
+async function prevDelivery() {
+  if (!previousDeliveryCursors.length) return;
+  deliveryCursor = previousDeliveryCursors.pop(); await loadDeliveries();
+}
+async function viewEventDeliveries(eventId) {
+  document.getElementById('delivEventId').value = eventId;
+  document.getElementById('delivStatus').value = '';
+  document.getElementById('delivSubscriptionId').value = '';
+  document.getElementById('delivRoundId').value = '';
+  showTab('tab-deliveries', document.querySelectorAll('.tab-btn')[3]);
+  await resetDeliveries();
+}
+async function viewReplayDeliveries() {
+  const id = document.getElementById('replayJobId').value.trim();
+  if (!/^[a-f0-9]{64}$/.test(id)) { notice('请先选择重放任务', true); return; }
+  document.getElementById('delivRoundId').value = id;
+  document.getElementById('delivStatus').value = '';
+  document.getElementById('delivEventId').value = '';
+  document.getElementById('delivSubscriptionId').value = '';
+  showTab('tab-deliveries', document.querySelectorAll('.tab-btn')[3]);
+  await resetDeliveries();
+}
+function selectForReplay(eventId) {
+  newReplayRound();
+  document.getElementById('replayEventIds').value = eventId;
+  showTab('tab-replay', document.querySelectorAll('.tab-btn')[4]);
+}
+function newReplayRound() {
+  document.getElementById('replayRequestKey').value = 'req-' + Date.now();
+  document.getElementById('replayJobId').value = '';
+  document.getElementById('replayResult').innerHTML = '<p class="muted">新一轮已准备好，请选择订阅和事件后提交。</p>';
+  document.getElementById('replayFeedback').textContent = '已生成新的请求标识。';
+}
+async function loadDeliveries() {
+  const st = document.getElementById('delivStatus').value;
+  const eventId = document.getElementById('delivEventId').value.trim();
+  let q = '/platform/deliveries?limit=50';
+  if (st) q += `&status=${st}`;
+  if (eventId) q += `&eventId=${encodeURIComponent(eventId)}`;
+  for (const [id, name] of [['delivSubscriptionId','subscriptionId'], ['delivRoundId','roundId']]) {
+    const value = document.getElementById(id).value.trim();
+    if (value) q += `&${name}=${encodeURIComponent(value)}`;
+  }
+  if (deliveryCursor) q += `&cursor=${deliveryCursor}`;
+  const page = await api(q);
+  followingDeliveryCursor = page.nextCursor;
+  document.getElementById('btnNextDelivery').disabled = !followingDeliveryCursor;
+  document.getElementById('btnPrevDelivery').disabled = !previousDeliveryCursors.length;
+  const list = page.items;
+  document.getElementById('deliveryFeedback').textContent = `查询完成于 ${new Date().toLocaleTimeString()}：本页 ${list.length} 条任务。`;
+  notice(`投递查询完成：本页 ${list.length} 条任务`, false);
+  deliveryTasks = list;
+  const pending = list.filter(t => t.status === 'PENDING' || t.status === 'RETRY_WAIT').length;
+  document.getElementById('cardTasks').textContent = pending;
+
+  const tbody = document.getElementById('deliveryList');
+  tbody.innerHTML = '';
+  if (list.length === 0) {
+    tbody.innerHTML = '<tr><td colspan="9" class="muted">暂无任务</td></tr>';
+    return;
+  }
+  list.forEach(t => {
+    const isFailed = t.status === 'FAILED';
+    tbody.innerHTML += `<tr>
+      <td>${t.taskId}</td>
+      <td><code>${t.deliveryId.substring(0, 10)}…</code></td>
+      <td>${esc(t.targetName)}</td>
+      <td>${UI.status(t.roundType)}</td>
+      <td>${UI.badge(t.status)}</td>
+      <td>${t.attemptCount} / ${t.maxAttempts}</td>
+      <td>${['PENDING','RETRY_WAIT'].includes(t.status) && t.nextRetryAt ? new Date(t.nextRetryAt).toLocaleTimeString() : '—'}</td>
+      <td title="${esc(t.lastError || '')}">${esc((t.lastError || '—').slice(0,60))}</td>
+      <td>
+        <button onclick="runAction(this, () => openEvent('${t.eventId}'))">来源事件</button>
+        ${stockoutDemoEnabled ? `<button onclick="runAction(this, () => viewEventStockouts('${t.eventId}'))">缺货待办</button>` : ''}
+        <button onclick="runAction(this, () => loadAttempts('${t.taskId}'))">查看尝试</button>
+        ${isFailed ? `<button class="primary" onclick="runAction(this, () => retryDelivery('${t.taskId}'))">追加一次投递</button>` : ''}
+      </td>
+    </tr>`;
+  });
+}
+
+async function loadAttempts(taskId) {
+  const attempts = await api(`/platform/deliveries/${taskId}/attempts`);
+  const task = deliveryTasks.find(t => String(t.taskId) === String(taskId));
+  const panel = document.getElementById('attemptDetail');
+  panel.innerHTML = `<h3>投递任务 ${esc(taskId)} ${UI.badge(task.status)}</h3>` + UI.facts([
+    ['通知目标', task.targetName], ['接收地址', task.targetUrl], ['通知轮次', UI.status(task.roundType)],
+    ['累计尝试 / 当前上限', `${task.attemptCount} / ${task.maxAttempts}`], ['最近错误', task.lastError || '无']
+  ]) + `<div class="scroll"><table class="readable-table"><thead><tr><th>第几次</th><th>结果</th><th>HTTP 状态</th><th>耗时</th><th>发生时间</th><th>错误原因</th></tr></thead><tbody>${attempts.map(attempt => `<tr>
+    <td>${attempt.attemptNumber}</td><td>${UI.badge(attempt.status)}</td><td>${attempt.httpStatus ?? '未收到响应'}</td>
+    <td>${attempt.durationMs} ms</td><td>${UI.date(attempt.createdAt)}</td><td>${esc(attempt.errorMessage || '无')}</td>
+  </tr>`).join('') || '<tr><td colspan="6" class="muted">尚未尝试发送。</td></tr>'}</tbody></table></div>`
+    + UI.technical({task,attempts}, '通知内容、规则快照与完整响应');
+  panel.scrollIntoView({behavior:'smooth',block:'start'});
+  notice(`已显示任务 ${taskId} 的 ${attempts.length} 次发送记录`, false);
+}
+
+async function retryDelivery(taskId) {
+  await api(`/platform/deliveries/${taskId}/retry`, {method: 'POST'});
+  await loadDeliveries();
+  notice(`任务 ${taskId} 已安排一次投递，历次记录保留`, false);
+}
+
+async function submitReplay() {
+  const key = document.getElementById('replayRequestKey').value.trim();
+  const subId = document.getElementById('replaySubSelect').value;
+  const rawIds = document.getElementById('replayEventIds').value;
+  const eventIds = rawIds.split(/[\n,]/).map(s => s.trim()).filter(Boolean);
+
+  if (!key || !subId || eventIds.length === 0) {
+    notice('请填写完整的请求标识、选择订阅并输入至少一个事件 ID', true);
+    return;
+  }
+
+  const result = await api('/platform/replay-jobs', {
+    method: 'POST',
+    headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify({requestKey: key, subscriptionId: subId, eventIds})
+  });
+
+  document.getElementById('replayJobId').value = result.jobId;
+  const deliveries = await api(`/platform/replay-jobs/${result.jobId}/delivery-stats`);
+  renderReplay(result, deliveries);
+  notice(`本轮已提交：匹配 ${result.matchedEvents} 条，跳过 ${result.skippedEvents} 条`, false);
+}
+
+async function refreshReplay() {
+  const id = document.getElementById('replayJobId').value.trim();
+  if (!/^[a-f0-9]{64}$/.test(id)) { notice('请输入重放任务 ID', true); return; }
+  const job = await api(`/platform/replay-jobs/${id}`);
+  const deliveries = await api(`/platform/replay-jobs/${id}/delivery-stats`);
+  renderReplay(job, deliveries);
+  notice('重放进度和投递结果已更新', false);
+}
+
+function renderReplay(job, deliveries) {
+  const rule = JSON.parse(job.subscriptionSnapshot);
+  const pending = (deliveries.PENDING || 0) + (deliveries.IN_FLIGHT || 0) + (deliveries.RETRY_WAIT || 0);
+  const operations = rule.operations.split(',').map(UI.status).join('、');
+  let message = `本轮按 ${rule.table} 表的${operations}订阅重新匹配历史事件。`;
+  if (job.status === 'COMPLETED' && job.matchedEvents === 0) {
+    message = `本轮没有匹配事件，未生成 HTTP 通知。订阅要求 ${rule.table} 表的${operations}事件，并满足下方筛选条件；请核对所选历史记录。`;
+  } else if (job.status === 'COMPLETED') {
+    message = `已为 ${job.matchedEvents} 条匹配事件生成通知任务。实际 HTTP 发送情况见下方“通知结果”。`;
+  }
+  const panel = document.getElementById('replayResult');
+  panel.innerHTML = `<h3>本轮重放 ${UI.badge(job.status)}</h3><p class="result-message ${job.matchedEvents === 0 ? 'warning' : ''}">${esc(message)}</p>
+    <label for="replayIdDisplay" style="margin-top:14px;">重放任务 ID</label><div class="copy-row"><input id="replayIdDisplay" readonly value="${esc(job.jobId)}"><button onclick="UI.copy('replayIdDisplay','replayCopyStatus')">复制任务 ID</button></div><p id="replayCopyStatus" class="muted" role="status"></p>
+    ${UI.stats([['总事件',job.totalEvents],['匹配',job.matchedEvents],['跳过',job.skippedEvents],['处理失败',job.failedEvents]])}
+    <h3>通知结果</h3>${UI.stats([['成功',deliveries.SUCCEEDED || 0],['等待或发送中',pending],['失败',deliveries.FAILED || 0]])}
+    <h3>本轮使用的订阅</h3>${UI.facts([['业务表',rule.table],['操作类型',operations],['通知目标',rule.targetName],
+      ['必须变化的字段',rule.changedFields || '不限制'],['变更后的筛选条件',rule.filterField ? rule.filterField + ' = ' + (rule.filterValue === null ? 'NULL' : JSON.stringify(rule.filterValue)) : '不限制']])}
+    ${job.lastError ? `<p class="result-message error">${esc(job.lastError)}</p>` : ''}
+    ${UI.technical({job,deliveries})}`;
+  document.getElementById('replayFeedback').textContent = `查询完成于 ${new Date().toLocaleTimeString()}：任务${UI.status(job.status)}，通知成功 ${deliveries.SUCCEEDED || 0} 条。`;
+  panel.scrollIntoView({behavior:'smooth',block:'start'});
+}
+
+for (const id of ['filterTable','filterKey','filterOp','filterFrom','filterTo']) {
+  document.getElementById(id).addEventListener('change', () => { currentCursor=null; previousCursors=[]; followingCursor=null;
+    document.getElementById('btnNextCursor').disabled=true; document.getElementById('btnPrevCursor').disabled=true; });
+}
+
+async function resetStockouts() { stockoutCursor = null; previousStockoutCursors = []; await loadStockouts(); }
+async function nextStockout() {
+  if (!followingStockoutCursor) return;
+  previousStockoutCursors.push(stockoutCursor); stockoutCursor = followingStockoutCursor; await loadStockouts();
+}
+async function prevStockout() {
+  if (!previousStockoutCursors.length) return;
+  stockoutCursor = previousStockoutCursors.pop(); await loadStockouts();
+}
+async function viewEventStockouts(eventId) {
+  document.getElementById('stockoutEventId').value = eventId;
+  document.getElementById('stockoutStatus').value = '';
+  showTab('tab-stockout', document.querySelectorAll('.tab-btn')[6]);
+  await resetStockouts();
+}
+async function loadStockouts() {
+  let q = '/warehouse/stockout-tasks?limit=20';
+  const status = document.getElementById('stockoutStatus').value;
+  const eventId = document.getElementById('stockoutEventId').value.trim();
+  if (status) q += `&status=${status}`;
+  if (eventId) q += `&eventId=${encodeURIComponent(eventId)}`;
+  if (stockoutCursor) q += `&cursor=${stockoutCursor}`;
+  const page = await api(q);
+  followingStockoutCursor = page.nextCursor;
+  document.getElementById('stockoutPrev').disabled = !previousStockoutCursors.length;
+  document.getElementById('stockoutNext').disabled = !followingStockoutCursor;
+  document.getElementById('stockoutList').innerHTML = page.items.map(t => `<tr>
+    <td>${t.id}</td><td>${esc(t.sku)}</td><td>${t.inventoryId}</td><td>${new Date(t.eventTimeMillis).toLocaleString()}</td>
+    <td>${t.status === 'PENDING' ? '待处理' : '已处理'}</td><td>${t.handledAt ? new Date(t.handledAt).toLocaleString() : '—'}</td>
+    <td><button onclick="runAction(this, () => openEvent('${t.eventId}'))">来源变更</button><button onclick="runAction(this, () => viewEventDeliveries('${t.eventId}'))">投递记录</button>
+    ${t.status === 'PENDING' ? `<button class="primary" onclick="runAction(this, () => completeStockout('${t.id}'))">标记已处理</button>` : ''}</td>
+  </tr>`).join('') || '<tr><td colspan="7" class="muted">无符合条件的待办</td></tr>';
+  document.getElementById('stockoutFeedback').textContent = `查询完成于 ${new Date().toLocaleTimeString()}：本页 ${page.items.length} 条待办。`;
+  notice(`待办查询完成：本页 ${page.items.length} 条`, false);
+}
+async function completeStockout(id) {
+  await api(`/warehouse/stockout-tasks/${id}/complete`, {method:'POST'});
+  await loadStockouts();
+  notice(`待办 ${id} 已标记处理`, false);
+}
+for (const id of ['stockoutStatus','stockoutEventId']) {
+  document.getElementById(id).addEventListener('change', resetStockouts);
+}
+for (const id of ['delivStatus','delivEventId','delivSubscriptionId','delivRoundId']) {
+  document.getElementById(id).addEventListener('change', resetDeliveries);
+}
+window.onload = init;
+</script>
+</body>
+</html>

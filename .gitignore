@@ -1,0 +1,15 @@
+target/
+.idea/
+*.iml
+
+# 本地连接配置与真实凭据，绝不提交
+application-local.yml
+.env
+
+# 构建产物与日志
+*.log
+logs/
+
+# 过程记录只在本地保存
+/records/
+__pycache__/
