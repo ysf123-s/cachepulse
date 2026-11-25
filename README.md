@@ -4,7 +4,7 @@
 
 ## 当前状态
 
-微服务拆分已完成（设计文档第 2～5 步）：430 项测试通过（需要外部 Redis、MySQL、Docker 的 38 项自动跳过），已部署在 Instabox 上，公网入口 [cdc.yusf.duckdns.org](https://cdc.yusf.duckdns.org/) 指向网关。原单体已删除。拆分设计和实测结果见 `docs/design/microservice-split.md`（第 14.1 节）。
+微服务拆分已完成（设计文档第 2～5 步）：435 项测试通过（需要外部 Redis、MySQL、Docker 的 38 项自动跳过），已部署在 Instabox 上，公网入口 [cdc.yusf.duckdns.org](https://cdc.yusf.duckdns.org/) 指向网关。原单体已删除。拆分设计和实测结果见 `docs/design/microservice-split.md`（第 14.1 节）。
 
 ## 结构
 
@@ -78,4 +78,4 @@ JWT 密钥、内部令牌、Nacos 密钥都用随机值：
 [Convert]::ToBase64String([Security.Cryptography.RandomNumberGenerator]::GetBytes(48))
 ```
 
-接口调用：`POST /auth/token`（`{"username":"admin","password":"..."}`）换取 30 分钟有效的令牌，之后请求带 `Authorization: Bearer <令牌>`。用户、部门的查询公开，按客户端 IP 限流（超过返回 429）；其余 `/api/**` 都要令牌。
+接口调用：`POST /auth/token`（`{"username":"admin","password":"..."}`）换取 30 分钟有效的令牌，之后请求带 `X-CachePulse-Token: <令牌>`（或 `Authorization: Bearer <令牌>`）。`/api/**` 的 GET 和用户、部门的按 ID 批量查询都公开，管理页面打开时不用登录；其余写操作都要令牌。所有接口按客户端 IP 限流（超过返回 429）。

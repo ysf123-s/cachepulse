@@ -1,7 +1,7 @@
 # CachePulse 微服务拆分设计
 
 - 更新日期：2026-11-24
-- 状态：第 2～5 步完成。代码按第 14 节第 7 条先写完、再统一测试；实现时的调整、部署和实测结果见第 14.1 节。2026-11-25：原单体的测试已迁到各模块（430 项通过，38 项需要外部依赖自动跳过），过渡模块已删除，CI 加上了页面脚本测试。
+- 状态：第 2～5 步完成。代码按第 14 节第 7 条先写完、再统一测试；实现时的调整、部署和实测结果见第 14.1 节。2026-11-25：原单体的测试已迁到各模块（435 项通过，38 项需要外部依赖自动跳过），过渡模块已删除，CI 加上了页面脚本测试。
 - 范围：从过渡模块 `cachepulse-monolith` 拆成微服务（第 2～5 步）、部署与切换（第 7 步）。余量场景（第 6 步）另出设计。
 
 ## 1. 目标与原则
@@ -254,14 +254,16 @@
 
 | 路径 | 转发到 | 鉴权 |
 | --- | --- | --- |
-| `/api/cache/protection` | demo-user-service（查询保护属于各接入方，每个接入方各有一份） | JWT |
-| `/api/cache/**`、`/api/sync/**`、`/api/diagnostics/**` | cache-sync-service | JWT |
-| `/api/platform/events/**`、`/api/platform/tables/**`、`/api/platform/recovery-plans/**`、`/api/platform/consumers/**` | archive-service | JWT |
-| `/api/platform/subscriptions/**`、`/api/platform/deliveries/**`、`/api/platform/replay-jobs/**`、`/api/platform/targets/**`、`/api/platform/examples/**`、`/api/platform/demo/webhook/**` | delivery-service | JWT |
-| `/api/users/**`、`/api/departments/**` 的 GET，以及按 ID 批量查询 `POST /api/users/batch`、`/api/departments/batch` | demo-user-service | 公开，按 IP 限流 |
+| `/api/cache/protection` | demo-user-service（查询保护属于各接入方，每个接入方各有一份） | GET 公开，写操作 JWT |
+| `/api/cache/**`、`/api/sync/**`、`/api/diagnostics/**` | cache-sync-service | GET 公开，写操作 JWT |
+| `/api/platform/events/**`、`/api/platform/tables/**`、`/api/platform/recovery-plans/**`、`/api/platform/consumers/**` | archive-service | GET 公开，写操作 JWT |
+| `/api/platform/subscriptions/**`、`/api/platform/deliveries/**`、`/api/platform/replay-jobs/**`、`/api/platform/targets/**`、`/api/platform/examples/**`、`/api/platform/demo/webhook/**` | delivery-service | GET 公开，写操作 JWT |
+| `/api/users/**`、`/api/departments/**` 的 GET，以及按 ID 批量查询 `POST /api/users/batch`、`/api/departments/batch` | demo-user-service | 公开 |
 | `/api/users/**`、`/api/departments/**` 的写操作 | demo-user-service | JWT |
-| `/api/warehouse/**` | demo-inventory-service | JWT |
+| `/api/warehouse/**` | demo-inventory-service | GET 公开，写操作 JWT |
 | `/internal/**` | 不转发 | 只在内部网络调用 |
+
+所有路由都按客户端 IP 限流（每秒 50 次，突发 100 次，超过返回 429）。只读接口公开后，管理页面打开时不用登录；新建、修改、删除、重放、清缓存时才弹登录框（第 14.1 节第 13 条）。
 
 `/platform/consumers/status` 现在一次返回缓存同步和归档两个消费者的状态。拆分后三个服务各自提供本服务消费者的状态，管理页面分别调用后合并展示；其中一个服务不可用时，其余两项照常显示。
 
@@ -439,6 +441,7 @@ Instabox 现在可用 4.9GiB，共存期间原应用继续运行也放得下，�
     - 已修（2026-11-25）：分组改按 `库名.表名` 存（`RegistryCacheGroups`），不同库的同名表各是一个分组；行事件、DDL 清缓存、新增主键广播都按 `库名.表名` 匹配。DDL 清缓存的库名取事件所在的库和 SQL 里出现的库名，拿不准时宁可多清。新增主键的广播频道改为 `cachepulse:bloom:{库名}.{表名}`，和第 6.3 节一致，接入组件只收本服务所连库里的分组。管理接口照旧可以只写表名，同一个表名在多个库都有分组时要写 `库名.表名`（否则返回 400）。
     - 已修（2026-11-25）：公网的查询限流原来按连接来源计数，而公网请求经华为云 Nginx → Instabox 端口转发 → 本机 TCP 转发进来，网关看到的来源都是 `172.19.0.1`，所有外网用户共用一个额度。改为按华为云 Nginx 写入的 `X-CachePulse-Client-IP`（`$remote_addr`，会覆盖客户端自带的值）计数，网关用 `cachepulse.gateway.client-ip-header` 配置这个头；没有这个头时仍按连接来源。网关只能经这层代理从公网访问，所以这个头可信。
     - 刷新、混合策略的代码（`doRefresh`、`doHybrid`、`toCacheJson`）在拆分后走不到（第 6.9 节），保留到以后恢复刷新策略时再用。
+13. **只读接口公开（2026-11-25）**：从服务导航打开管理页面时，页面一加载就弹登录框，因为页面的查询接口也要令牌。改为 `/api/**` 的 GET 都公开，写操作（新建、修改、删除订阅，重放，清缓存，改用户和部门）仍要令牌，`/internal/**` 照旧拒绝。只读接口公开后，所有路由都按客户端 IP 限流。代价：谁都能看到归档的变更记录、订阅配置和缓存内容；这些都是 `demo_db` 的演示数据。`SecurityRulesTest` 检查了这几条规则。
 
 ## 15. 与原项目的对比
 

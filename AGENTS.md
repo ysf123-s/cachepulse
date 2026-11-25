@@ -33,7 +33,7 @@
 
 ## 验证命令
 
-- Java 全量测试：`mvn -o -B test`（新增依赖后先去掉 `-o` 联网跑一次）。需要外部 Redis、MySQL、Docker 的测试会自动跳过，目前共 430 项，跳过 38 项（2026-11-25）。本机内存紧张，几个进程同时跑 Maven 时要排队，不要并行。
+- Java 全量测试：`mvn -o -B test`（新增依赖后先去掉 `-o` 联网跑一次）。需要外部 Redis、MySQL、Docker 的测试会自动跳过，目前共 435 项，跳过 38 项（2026-11-25）。本机内存紧张，几个进程同时跑 Maven 时要排队，不要并行。
 - 管理页面脚本测试：在 `gateway/` 目录下执行 `node src/test/js/cache-dashboard.test.cjs`、`node src/test/js/platform-dashboard.test.cjs`。
 - 真实 Redis 测试：`mvn -o -B test "-Dtest=*RedisTest" "-Dsurefire.failIfNoSpecifiedTests=false" -Dcache.test.redis.host=<host>`，端口和密码取环境变量 `CACHE_TEST_REDIS_PORT`、`CACHE_TEST_REDIS_PASSWORD`（从 `application-local.yml` 的 `spring.data.redis` 解析）；只使用随机前缀 key 并自行清理。
 

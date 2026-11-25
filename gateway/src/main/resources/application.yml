@@ -56,12 +56,20 @@ spring:
             - StripPrefix=1
           routes:
             # 查询保护属于各接入方，每个接入方各有一份；必须排在 /api/cache/** 前面
+            # 所有路由都按客户端 IP 限流：只读接口不用登录（SecurityConfiguration），超过返回 429
             - id: user-cache-protection
               uri: lb://demo-user-service
               order: -10
               predicates:
                 - Path=/api/cache/protection
               filters:
+                - &publicRateLimit
+                  name: RequestRateLimiter
+                  args:
+                    key-resolver: "#{@ipKeyResolver}"
+                    redis-rate-limiter.replenishRate: 50
+                    redis-rate-limiter.burstCapacity: 100
+                    redis-rate-limiter.requestedTokens: 1
                 - name: CircuitBreaker
                   args:
                     name: demo-user-service
@@ -71,6 +79,7 @@ spring:
               predicates:
                 - Path=/api/cache/**,/api/sync/**,/api/diagnostics/**
               filters:
+                - *publicRateLimit
                 - name: CircuitBreaker
                   args:
                     name: cache-sync-service
@@ -80,6 +89,7 @@ spring:
               predicates:
                 - Path=/api/platform/events/**,/api/platform/tables/**,/api/platform/recovery-plans/**,/api/platform/consumers/**
               filters:
+                - *publicRateLimit
                 - name: CircuitBreaker
                   args:
                     name: archive-service
@@ -92,6 +102,7 @@ spring:
               predicates:
                 - Path=/api/platform/subscriptions/**,/api/platform/deliveries/**,/api/platform/replay-jobs/**,/api/platform/targets/**,/api/platform/examples/**,/api/platform/demo/webhook/**
               filters:
+                - *publicRateLimit
                 - name: CircuitBreaker
                   args:
                     name: delivery-service
@@ -104,13 +115,7 @@ spring:
                 - Path=/api/users/**,/api/departments/**
                 - Method=GET
               filters:
-                - &publicRateLimit
-                  name: RequestRateLimiter
-                  args:
-                    key-resolver: "#{@ipKeyResolver}"
-                    redis-rate-limiter.replenishRate: 50
-                    redis-rate-limiter.burstCapacity: 100
-                    redis-rate-limiter.requestedTokens: 1
+                - *publicRateLimit
                 - name: CircuitBreaker
                   args:
                     name: demo-user-service
@@ -133,6 +138,7 @@ spring:
               predicates:
                 - Path=/api/users/**,/api/departments/**
               filters:
+                - *publicRateLimit
                 - name: CircuitBreaker
                   args:
                     name: demo-user-service
@@ -142,6 +148,7 @@ spring:
               predicates:
                 - Path=/api/warehouse/**
               filters:
+                - *publicRateLimit
                 - name: CircuitBreaker
                   args:
                     name: demo-inventory-service

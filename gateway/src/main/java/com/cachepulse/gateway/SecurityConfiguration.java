@@ -4,7 +4,6 @@ import com.nimbusds.jose.jwk.source.ImmutableSecret;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
-import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.web.reactive.EnableWebFluxSecurity;
 import org.springframework.security.config.web.server.ServerHttpSecurity;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
@@ -24,7 +23,8 @@ import javax.crypto.SecretKey;
 import javax.crypto.spec.SecretKeySpec;
 
 /**
- * 鉴权规则（设计文档第 9.2 节）：用户、部门的查询公开（按 IP 限流），其余 /api/** 都要 JWT；
+ * 鉴权规则（设计文档第 9.2 节）：/api/** 的 GET 都公开，管理页面不登录也能看；
+ * 用户、部门的按 ID 批量查询也公开；其余写操作要 JWT。公开请求都按客户端 IP 限流。
  * /internal/** 只在内部网络调用，网关直接拒绝。
  */
 @Configuration(proxyBeanMethods = false)
@@ -53,7 +53,7 @@ public class SecurityConfiguration {
     }
 
     @Bean
-    public SecurityWebFilterChain securityWebFilterChain(ServerHttpSecurity http) {
+    public SecurityWebFilterChain securityWebFilterChain(ServerHttpSecurity http, ReactiveJwtDecoder jwtDecoder) {
         return http
                 .csrf(ServerHttpSecurity.CsrfSpec::disable)
                 .httpBasic(ServerHttpSecurity.HttpBasicSpec::disable)
@@ -65,12 +65,13 @@ public class SecurityConfiguration {
                         .pathMatchers("/actuator/health", "/actuator/health/**").permitAll()
                         .pathMatchers("/fallback/**").permitAll()
                         .pathMatchers(HttpMethod.GET, "/", "/*.html", "/*.css", "/*.js", "/favicon.ico").permitAll()
-                        .pathMatchers(HttpMethod.GET, "/api/users/**", "/api/departments/**").permitAll()
+                        // 只读接口公开：管理页面不登录也能看；新建、修改、删除、重放、清缓存才要登录
+                        .pathMatchers(HttpMethod.GET, "/api/**").permitAll()
                         // 按 ID 批量查询也是只读，和单条查询一样公开、限流
                         .pathMatchers(HttpMethod.POST, "/api/users/batch", "/api/departments/batch").permitAll()
                         .anyExchange().authenticated())
                 .oauth2ResourceServer(server -> server.bearerTokenConverter(tokenConverter())
-                        .jwt(Customizer.withDefaults()))
+                        .jwt(jwt -> jwt.jwtDecoder(jwtDecoder)))
                 .build();
     }
 
