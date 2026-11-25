@@ -1,0 +1,6 @@
+# 网关。路由写在网关自己的 application.yml 里；这里放可以按环境调整的参数。
+cachepulse:
+  gateway:
+    token-ttl: 30m
+    # 公网入口前的反向代理层数；直接对外暴露时设为 0
+    trusted-proxies: ${GATEWAY_TRUSTED_PROXIES:1}

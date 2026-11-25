@@ -18,9 +18,20 @@ jobs:
           java-version: "17"
           cache: maven
 
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+
       # GitHub runner 自带 Docker，Testcontainers 测试会真正执行而不是被跳过
       - name: Verify
         run: mvn -B verify
+
+      # 网关托管的两个管理页面
+      - name: Dashboard scripts
+        working-directory: gateway
+        run: |
+          node src/test/js/cache-dashboard.test.cjs
+          node src/test/js/platform-dashboard.test.cjs
 
       - name: Upload test reports
         if: always()

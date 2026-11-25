@@ -1,0 +1,10 @@
+# 查询保护参数：改了约 3 秒生效，不用重启（设计文档第 6.8 节）。正在使用的查库名额归还给旧的限流器。
+cache:
+  redis-breaker:
+    failure-threshold: 5
+    open-ms: 5000
+  load:
+    max-concurrency: 6
+    acquire-timeout-ms: 200
+    suspect-max-concurrency: 2
+    suspect-acquire-timeout-ms: 0

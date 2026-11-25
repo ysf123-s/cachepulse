@@ -1,0 +1,29 @@
+# Nacos：命名空间 cachepulse，分组 DEFAULT_GROUP，所有服务共用（设计文档第 9.1 节）。
+# 只放连接地址这类公共配置；密码不放进 Nacos，这里引用的 ${...} 在各服务启动时从环境变量取值。
+# 发布：scripts/local/nacos-publish.ps1
+spring:
+  data:
+    redis:
+      host: ${REDIS_HOST:127.0.0.1}
+      port: ${REDIS_PORT:6379}
+      # 原项目用 DB 0，CachePulse 用 DB 1
+      database: 1
+
+canal:
+  mq:
+    kafka:
+      # Kafka 对外通告 localhost:9092，经 SSH 隧道访问时本地端口也必须是 9092
+      servers: ${KAFKA_BOOTSTRAP:127.0.0.1:9092}
+      topic: example
+      partition-count: 6
+
+platform:
+  # 切换时和原项目保持一致（设计文档第 11 节）
+  source-id: ${PLATFORM_SOURCE_ID:local-mysql-v1}
+  binlog-time-zone: Asia/Shanghai
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics,prometheus

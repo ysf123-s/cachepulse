@@ -1,0 +1,205 @@
+# 网关：唯一对外的入口（设计文档第 9.2 节）。去掉 /api 前缀后转发，各服务的接口路径不变。
+# 管理员密码哈希、JWT 密钥只从环境变量读取。
+server:
+  port: ${SERVER_PORT:18090}
+  address: ${SERVER_ADDRESS:127.0.0.1}
+  shutdown: graceful
+
+spring:
+  application:
+    name: gateway
+  lifecycle:
+    timeout-per-shutdown-phase: 20s
+  reactor:
+    # 让 WebFlux 的日志也带上 traceId
+    context-propagation: auto
+  config:
+    import:
+      - optional:file:./cachepulse-local.yml
+      # 默认从 Nacos 读取，Nacos 不可用时启动失败。不连 Nacos 时（测试、临时排查）用
+      # --cachepulse.config-prefix=optional:file:./config/nacos/ 直接读仓库里的同一份配置。
+      - ${cachepulse.config-prefix:nacos:}cachepulse-common.yaml
+      - ${cachepulse.config-prefix:nacos:}gateway.yaml
+  data:
+    redis:
+      # 限流计数，和缓存同一个 Redis DB 1，key 前缀由 RedisRateLimiter 决定（request_rate_limiter.*）
+      host: ${REDIS_HOST:127.0.0.1}
+      port: ${REDIS_PORT:6379}
+      password: ${REDIS_PASSWORD:}
+      database: ${REDIS_DB:1}
+      timeout: 2s
+  cloud:
+    nacos:
+      discovery:
+        server-addr: ${NACOS_ADDR:127.0.0.1:18848}
+        namespace: ${NACOS_NAMESPACE:cachepulse}
+        username: ${NACOS_USERNAME:nacos}
+        password: ${NACOS_PASSWORD:}
+      config:
+        server-addr: ${NACOS_ADDR:127.0.0.1:18848}
+        namespace: ${NACOS_NAMESPACE:cachepulse}
+        username: ${NACOS_USERNAME:nacos}
+        password: ${NACOS_PASSWORD:}
+        file-extension: yaml
+    loadbalancer:
+      # Nacos 客户端已有推送更新的实例缓存；LoadBalancer 再缓存 35 秒会让下线的实例继续收到约 23 秒请求
+      cache:
+        enabled: false
+    gateway:
+      server:
+        webflux:
+          httpclient:
+            connect-timeout: 1000
+            # 默认响应超时，和下面 resilience4j 的默认 TimeLimiter 保持一致；个别路由在 metadata 里单独设
+            response-timeout: 5s
+          default-filters:
+            - StripPrefix=1
+          routes:
+            # 查询保护属于各接入方，每个接入方各有一份；必须排在 /api/cache/** 前面
+            - id: user-cache-protection
+              uri: lb://demo-user-service
+              order: -10
+              predicates:
+                - Path=/api/cache/protection
+              filters:
+                - name: CircuitBreaker
+                  args:
+                    name: demo-user-service
+                    fallbackUri: forward:/fallback/demo-user-service
+            - id: cache-sync
+              uri: lb://cache-sync-service
+              predicates:
+                - Path=/api/cache/**,/api/sync/**,/api/diagnostics/**
+              filters:
+                - name: CircuitBreaker
+                  args:
+                    name: cache-sync-service
+                    fallbackUri: forward:/fallback/cache-sync-service
+            - id: archive
+              uri: lb://archive-service
+              predicates:
+                - Path=/api/platform/events/**,/api/platform/tables/**,/api/platform/recovery-plans/**,/api/platform/consumers/**
+              filters:
+                - name: CircuitBreaker
+                  args:
+                    name: archive-service
+                    fallbackUri: forward:/fallback/archive-service
+            - id: delivery
+              uri: lb://delivery-service
+              # 创建重放任务时要向归档服务取最多 100 条事件，超时放宽到 15 秒
+              metadata:
+                response-timeout: 15000
+              predicates:
+                - Path=/api/platform/subscriptions/**,/api/platform/deliveries/**,/api/platform/replay-jobs/**,/api/platform/targets/**,/api/platform/examples/**,/api/platform/demo/webhook/**
+              filters:
+                - name: CircuitBreaker
+                  args:
+                    name: delivery-service
+                    fallbackUri: forward:/fallback/delivery-service
+            # 公开查询：按客户端 IP 限流，超过返回 429
+            - id: user-query
+              uri: lb://demo-user-service
+              order: -5
+              predicates:
+                - Path=/api/users/**,/api/departments/**
+                - Method=GET
+              filters:
+                - &publicRateLimit
+                  name: RequestRateLimiter
+                  args:
+                    key-resolver: "#{@ipKeyResolver}"
+                    redis-rate-limiter.replenishRate: 50
+                    redis-rate-limiter.burstCapacity: 100
+                    redis-rate-limiter.requestedTokens: 1
+                - name: CircuitBreaker
+                  args:
+                    name: demo-user-service
+                    fallbackUri: forward:/fallback/demo-user-service
+            - id: user-batch-query
+              uri: lb://demo-user-service
+              order: -5
+              predicates:
+                - Path=/api/users/batch,/api/departments/batch
+                - Method=POST
+              filters:
+                - *publicRateLimit
+                - name: CircuitBreaker
+                  args:
+                    name: demo-user-service
+                    fallbackUri: forward:/fallback/demo-user-service
+            # 写操作要 JWT（由 SecurityConfiguration 校验）
+            - id: user-write
+              uri: lb://demo-user-service
+              predicates:
+                - Path=/api/users/**,/api/departments/**
+              filters:
+                - name: CircuitBreaker
+                  args:
+                    name: demo-user-service
+                    fallbackUri: forward:/fallback/demo-user-service
+            - id: warehouse
+              uri: lb://demo-inventory-service
+              predicates:
+                - Path=/api/warehouse/**
+              filters:
+                - name: CircuitBreaker
+                  args:
+                    name: demo-inventory-service
+                    fallbackUri: forward:/fallback/demo-inventory-service
+
+resilience4j:
+  circuitbreaker:
+    configs:
+      default:
+        sliding-window-type: COUNT_BASED
+        sliding-window-size: 20
+        minimum-number-of-calls: 10
+        failure-rate-threshold: 50
+        slow-call-duration-threshold: 4s
+        slow-call-rate-threshold: 80
+        wait-duration-in-open-state: 10s
+        permitted-number-of-calls-in-half-open-state: 3
+  timelimiter:
+    # 网关这一层的 TimeLimiter 默认只给 1 秒（实测 2 秒的下游 1086ms 就降级），按路由显式设置，和 HTTP 客户端的响应超时一致
+    configs:
+      default:
+        timeout-duration: 5s
+    instances:
+      delivery-service:
+        timeout-duration: 15s
+
+cachepulse:
+  gateway:
+    admin-username: ${GATEWAY_ADMIN_USER:admin}
+    # BCrypt 哈希，生成方法见 README；不存明文
+    admin-password-hash: ${GATEWAY_ADMIN_PASSWORD_HASH:}
+    # Base64，原文至少 32 字节
+    jwt-secret: ${GATEWAY_JWT_SECRET:}
+    token-ttl: 30m
+    # 公网入口前有一层反向代理；直接对外暴露时设为 0
+    trusted-proxies: ${GATEWAY_TRUSTED_PROXIES:1}
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics,prometheus
+  endpoint:
+    health:
+      probes:
+        enabled: true
+  tracing:
+    sampling:
+      probability: 1.0
+  metrics:
+    tags:
+      application: ${spring.application.name}
+
+# 日志默认带应用名和 [traceId-spanId]（Spring Boot 3.5 的 logging.pattern.correlation），按天滚动
+logging:
+  file:
+    name: ${LOG_DIR:logs}/${spring.application.name}.log
+  logback:
+    rollingpolicy:
+      file-name-pattern: ${LOG_DIR:logs}/${spring.application.name}.%d{yyyy-MM-dd}.%i.log
+      max-history: 7

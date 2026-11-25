@@ -1,0 +1,85 @@
+# 演示接入方：用户、部门。写库不改代码，读缓存通过接入组件；查询保护参数在 Nacos 的 demo-user-service.yaml，
+# 改了约 3 秒生效（设计文档第 6.8 节）。
+server:
+  port: ${SERVER_PORT:18094}
+  address: ${SERVER_ADDRESS:127.0.0.1}
+
+spring:
+  application:
+    name: demo-user-service
+  config:
+    import:
+      - optional:file:./cachepulse-local.yml
+      # 默认从 Nacos 读取，Nacos 不可用时启动失败。不连 Nacos 时（测试、临时排查）用
+      # --cachepulse.config-prefix=optional:file:./config/nacos/ 直接读仓库里的同一份配置。
+      - ${cachepulse.config-prefix:nacos:}cachepulse-common.yaml
+      - ${cachepulse.config-prefix:nacos:}demo-user-service.yaml
+  cloud:
+    nacos:
+      discovery:
+        server-addr: ${NACOS_ADDR:127.0.0.1:18848}
+        namespace: ${NACOS_NAMESPACE:cachepulse}
+        username: ${NACOS_USERNAME:nacos}
+        password: ${NACOS_PASSWORD:}
+      config:
+        server-addr: ${NACOS_ADDR:127.0.0.1:18848}
+        namespace: ${NACOS_NAMESPACE:cachepulse}
+        username: ${NACOS_USERNAME:nacos}
+        password: ${NACOS_PASSWORD:}
+        file-extension: yaml
+  datasource:
+    url: jdbc:mysql://${MYSQL_HOST:127.0.0.1}:${MYSQL_PORT:3306}/demo_db?useSSL=false&serverTimezone=Asia/Shanghai&allowPublicKeyRetrieval=true
+    username: ${MYSQL_USER:demo}
+    password: ${MYSQL_PASSWORD:}
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    hikari:
+      # 与 cache.load 的查库上限配套：两条通道合计 8，留出写接口的连接
+      maximum-pool-size: 10
+      keepalive-time: 60000
+      validation-timeout: 1000
+  data:
+    redis:
+      host: ${REDIS_HOST:127.0.0.1}
+      port: ${REDIS_PORT:6379}
+      password: ${REDIS_PASSWORD:}
+      database: ${REDIS_DB:1}
+      timeout: 5s
+      lettuce:
+        pool:
+          max-active: 8
+          max-idle: 4
+          min-idle: 1
+
+cachepulse:
+  internal-token: ${CACHEPULSE_INTERNAL_TOKEN:}
+  cache:
+    # 注册表里的字段是"库名.表名"（设计文档第 6.6 节）
+    database: demo_db
+    base-package: com.cachepulse.demo.user
+
+# 查询侧保护，只影响查询读写 Redis 和查库的方式，不改变删缓存的处理。
+cache:
+  ttl-jitter-percent: 10
+  redis-breaker:
+    failure-threshold: 5
+    open-ms: 5000
+  load:
+    max-concurrency: 6
+    acquire-timeout-ms: 200
+    suspect-max-concurrency: 2
+    suspect-acquire-timeout-ms: 0
+  bloom:
+    enabled: true
+    expected-insertions: 100000
+    false-positive-rate: 0.01
+
+# 日志默认带应用名和 [traceId-spanId]（Spring Boot 3.5 的 logging.pattern.correlation），按天滚动
+logging:
+  file:
+    name: ${LOG_DIR:logs}/${spring.application.name}.log
+  logback:
+    rollingpolicy:
+      file-name-pattern: ${LOG_DIR:logs}/${spring.application.name}.%d{yyyy-MM-dd}.%i.log
+      max-history: 7
+  level:
+    com.cachepulse: INFO

@@ -1,0 +1,64 @@
+package com.cachepulse.cache.annotation;
+
+import java.lang.annotation.Documented;
+import java.lang.annotation.ElementType;
+import java.lang.annotation.Retention;
+import java.lang.annotation.RetentionPolicy;
+import java.lang.annotation.Target;
+
+/**
+ * 标记需要自动同步缓存的实体类。
+ */
+@Target(ElementType.TYPE)
+@Retention(RetentionPolicy.RUNTIME)
+@Documented
+public @interface AutoCache {
+
+    /**
+     * 监听的数据库表名。
+     */
+    String table();
+
+    /**
+     * 业务库名，留空时使用 cachepulse.cache.database。
+     */
+    String database() default "";
+
+    /**
+     * 固定命名空间后接 :#id，例如 user:#id；不同分组的命名空间不能重叠。
+     */
+    String keyTemplate();
+
+    /**
+     * 二级索引缓存，格式为固定命名空间后接 :#列名，例如 user-email:#email。
+     * 缓存值是该列取值对应的主键列表；行变更时用修改前、修改后的列值各删一次，不刷新。
+     */
+    String[] indexKeys() default {};
+
+    /**
+     * 缓存同步策略。跨进程接入时只支持 DELETE_MODE：刷新需要业务实体类，同步服务拿不到。
+     */
+    CacheStrategy strategy() default CacheStrategy.DELETE_MODE;
+
+    /**
+     * 缓存过期时间，单位秒。
+     */
+    int expireSeconds() default 1800;
+
+    /**
+     * 大 key 阈值，单位字节。超过后 HYBRID_MODE 会降级为删除。
+     */
+    int maxSizeBytes() default 10240;
+
+    /**
+     * 是否启用版本控制，降低旧事件覆盖新缓存的风险。
+     */
+    boolean enableVersionControl() default true;
+
+    /**
+     * 是否为主键维护布隆过滤器：启动时从数据库读出全部主键，之后由 CDC 的新增事件补充。
+     * 判定一定不存在的主键查库时走单独的窄通道，不直接拒绝，避免 CDC 延迟期间把刚插入的行误判为不存在。
+     * 需要加载器实现 {@code loadIdsAfter}。
+     */
+    boolean bloomFilter() default false;
+}

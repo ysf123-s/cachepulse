@@ -1,0 +1,8 @@
+# 缓存同步服务。心跳开关是启动参数，改了要重启；只在 Instabox 上运行时改为 true（设计文档第 6.5 节）。
+canal:
+  heartbeat:
+    enabled: ${CDC_HEARTBEAT_ENABLED:false}
+
+cachepulse:
+  registry:
+    refresh-ms: 2000

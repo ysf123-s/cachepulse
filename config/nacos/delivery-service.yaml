@@ -1,0 +1,25 @@
+# 订阅目标和投递重试参数。PlatformProperties 是 @ConfigurationProperties，改了约 3 秒生效。
+# 目标地址只登记别名，订阅里引用别名；地址不能带账号密码。
+platform:
+  max-attempts: 3
+  lease-seconds: 30
+  backoff-initial-seconds: 5
+  enabled-examples: [stockout]
+  targets:
+    demo-webhook:
+      url: ${DEMO_WEBHOOK_URL:http://127.0.0.1:18093/platform/demo/webhook}
+      timeout-ms: 5000
+    stockout-workbench:
+      # 容器里部署时改为库存服务的容器名，如 http://cp-demo-inventory-service:18095/warehouse/stockout-events
+      url: ${STOCKOUT_TARGET_URL:http://127.0.0.1:18095/warehouse/stockout-events}
+      timeout-ms: 5000
+
+# 重放时调用归档服务：超时只在 Feign 上设（连接 1 秒、读取 3 秒），熔断参数见 cachepulse-framework 的默认值
+spring:
+  cloud:
+    openfeign:
+      client:
+        config:
+          archiveEvents:
+            connect-timeout: 1000
+            read-timeout: 3000

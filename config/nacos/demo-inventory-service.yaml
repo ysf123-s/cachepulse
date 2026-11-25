@@ -1,0 +1,4 @@
+# 演示库存服务（订阅接收端）。
+logging:
+  level:
+    com.cachepulse.demo.inventory: INFO

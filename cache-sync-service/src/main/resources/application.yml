@@ -1,0 +1,99 @@
+# 缓存同步服务。连接地址等公共配置在 Nacos 的 cachepulse-common.yaml，可调参数在 cache-sync-service.yaml，
+# 密码只从环境变量读取（设计文档第 9.1 节）。这里的取值是本机开发的默认值。
+server:
+  port: ${SERVER_PORT:18091}
+  address: ${SERVER_ADDRESS:127.0.0.1}
+
+spring:
+  application:
+    name: cache-sync-service
+  config:
+    import:
+      - optional:file:./cachepulse-local.yml
+      # 默认从 Nacos 读取，Nacos 不可用时启动失败。不连 Nacos 时（测试、临时排查）用
+      # --cachepulse.config-prefix=optional:file:./config/nacos/ 直接读仓库里的同一份配置。
+      - ${cachepulse.config-prefix:nacos:}cachepulse-common.yaml
+      - ${cachepulse.config-prefix:nacos:}cache-sync-service.yaml
+  cloud:
+    nacos:
+      discovery:
+        server-addr: ${NACOS_ADDR:127.0.0.1:18848}
+        namespace: ${NACOS_NAMESPACE:cachepulse}
+        username: ${NACOS_USERNAME:nacos}
+        password: ${NACOS_PASSWORD:}
+      config:
+        server-addr: ${NACOS_ADDR:127.0.0.1:18848}
+        namespace: ${NACOS_NAMESPACE:cachepulse}
+        username: ${NACOS_USERNAME:nacos}
+        password: ${NACOS_PASSWORD:}
+        file-extension: yaml
+  datasource:
+    # 只用来写心跳行（demo_db.cdc_heartbeat 的 1001～1024 行）
+    url: jdbc:mysql://${MYSQL_HOST:127.0.0.1}:${MYSQL_PORT:3306}/demo_db?useSSL=false&serverTimezone=Asia/Shanghai&allowPublicKeyRetrieval=true
+    username: ${MYSQL_USER:demo}
+    password: ${MYSQL_PASSWORD:}
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    hikari:
+      maximum-pool-size: 2
+      keepalive-time: 60000
+      validation-timeout: 1000
+  data:
+    redis:
+      host: ${REDIS_HOST:127.0.0.1}
+      port: ${REDIS_PORT:6379}
+      password: ${REDIS_PASSWORD:}
+      # 原项目用 DB 0，CachePulse 用 DB 1（设计文档第 8 节）
+      database: ${REDIS_DB:1}
+      timeout: 5s
+      lettuce:
+        pool:
+          max-active: 8
+          max-idle: 4
+          min-idle: 1
+
+canal:
+  destination: example
+  # 数据源代数。主从切换、重建或 RESET MASTER 后递增并重启。
+  source-epoch: 0
+  heartbeat:
+    # 开发期间本机不写心跳：本机时钟偏快会让原项目误判分区更新鲜（设计文档第 6.5 节），只在 Instabox 上开启。
+    enabled: ${CDC_HEARTBEAT_ENABLED:false}
+    database: demo_db
+    table: cdc_heartbeat
+    # 原项目用 1～24 行，CachePulse 用 1001～1024，两边各写各的行
+    first-id: 1001
+    rows: 24
+    # 第一阶段单实例消费全部分区（设计文档第 6.11 节）
+    expected-partitions: ${canal.mq.kafka.partition-count}
+    interval-ms: 1000
+    stale-after-ms: 3000
+  mq:
+    kafka:
+      servers: ${KAFKA_BOOTSTRAP:127.0.0.1:9092}
+      topic: example
+      group-id: cachepulse-cache-sync
+      partition-count: 6
+      batch-size: 500
+      poll-timeout-ms: 50
+      flat-message: false
+
+cachepulse:
+  cache-sync-group: ${canal.mq.kafka.group-id}
+  internal-token: ${CACHEPULSE_INTERNAL_TOKEN:}
+  freshness:
+    publish-ms: 200
+    ttl-ms: 3000
+  registry:
+    refresh-ms: 2000
+
+# 日志默认带应用名和 [traceId-spanId]（Spring Boot 3.5 的 logging.pattern.correlation），按天滚动
+logging:
+  file:
+    name: ${LOG_DIR:logs}/${spring.application.name}.log
+  logback:
+    rollingpolicy:
+      file-name-pattern: ${LOG_DIR:logs}/${spring.application.name}.%d{yyyy-MM-dd}.%i.log
+      max-history: 7
+  level:
+    com.cachepulse: INFO
+    com.alibaba.otter.canal: INFO

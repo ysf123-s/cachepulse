@@ -4,6 +4,8 @@ target/
 
 # 本地连接配置与真实凭据，绝不提交
 application-local.yml
+cachepulse-local.yml
+cachepulse-local.env
 .env
 
 # 构建产物与日志

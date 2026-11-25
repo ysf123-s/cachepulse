@@ -20,7 +20,16 @@
     <description>基于 Binlog 的缓存一致性与数据变更订阅平台</description>
 
     <modules>
-        <module>cachepulse-monolith</module>
+        <module>cachepulse-framework</module>
+        <module>cachepulse-common</module>
+        <module>cachepulse-cache-core</module>
+        <module>cachepulse-spring-boot-starter</module>
+        <module>gateway</module>
+        <module>cache-sync-service</module>
+        <module>archive-service</module>
+        <module>delivery-service</module>
+        <module>demo-user-service</module>
+        <module>demo-inventory-service</module>
     </modules>
 
     <properties>
@@ -29,13 +38,42 @@
         <spring-cloud-alibaba.version>2025.0.0.0</spring-cloud-alibaba.version>
         <mybatis-plus.version>3.5.18.1</mybatis-plus.version>
         <canal.version>1.1.8</canal.version>
-        <!-- 覆盖 Spring Boot 管理的版本：Canal 1.1.8 的 Kafka 连接器已在真实链路上用 3.6.2 验证 -->
-        <kafka.version>3.6.2</kafka.version>
+        <!-- kafka-clients 跟随 Spring Boot 管理的 3.9.x。Canal 1.1.8 按 kafka-clients 2.4 编译，官方连接器调用的 poll(long) 在 4.0 已删除（项目子类已改用 poll(Duration)），不单独升 4.x -->
+        <!-- Canal 1.1.8 自带 protobuf-java 3.6.1（CVE-2024-7254 等），升到 3.x 最后一条修复线 -->
+        <protobuf-java.version>3.25.9</protobuf-java.version>
         <testcontainers.version>1.21.4</testcontainers.version>
     </properties>
 
+    <dependencies>
+        <dependency>
+            <groupId>org.projectlombok</groupId>
+            <artifactId>lombok</artifactId>
+            <scope>provided</scope>
+        </dependency>
+    </dependencies>
+
     <dependencyManagement>
         <dependencies>
+            <dependency>
+                <groupId>io.github.ysf123s.cachepulse</groupId>
+                <artifactId>cachepulse-framework</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>io.github.ysf123s.cachepulse</groupId>
+                <artifactId>cachepulse-common</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>io.github.ysf123s.cachepulse</groupId>
+                <artifactId>cachepulse-cache-core</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>io.github.ysf123s.cachepulse</groupId>
+                <artifactId>cachepulse-spring-boot-starter</artifactId>
+                <version>${project.version}</version>
+            </dependency>
             <dependency>
                 <groupId>org.springframework.cloud</groupId>
                 <artifactId>spring-cloud-dependencies</artifactId>
@@ -59,12 +97,49 @@
                 <groupId>com.alibaba.otter</groupId>
                 <artifactId>canal.client</artifactId>
                 <version>${canal.version}</version>
+                <exclusions>
+                    <!-- 只给 Canal 的 ZooKeeper 集群连接器用；项目只用 Kafka 连接器 -->
+                    <exclusion>
+                        <groupId>org.apache.zookeeper</groupId>
+                        <artifactId>zookeeper</artifactId>
+                    </exclusion>
+                </exclusions>
+            </dependency>
+            <dependency>
+                <groupId>com.google.protobuf</groupId>
+                <artifactId>protobuf-java</artifactId>
+                <version>${protobuf-java.version}</version>
             </dependency>
             <dependency>
                 <groupId>com.alibaba.otter</groupId>
                 <artifactId>canal.protocol</artifactId>
                 <version>${canal.version}</version>
+                <exclusions>
+                    <exclusion>
+                        <groupId>org.apache.zookeeper</groupId>
+                        <artifactId>zookeeper</artifactId>
+                    </exclusion>
+                </exclusions>
             </dependency>
         </dependencies>
     </dependencyManagement>
+
+    <build>
+        <pluginManagement>
+            <plugins>
+                <plugin>
+                    <groupId>org.springframework.boot</groupId>
+                    <artifactId>spring-boot-maven-plugin</artifactId>
+                    <configuration>
+                        <excludes>
+                            <exclude>
+                                <groupId>org.projectlombok</groupId>
+                                <artifactId>lombok</artifactId>
+                            </exclude>
+                        </excludes>
+                    </configuration>
+                </plugin>
+            </plugins>
+        </pluginManagement>
+    </build>
 </project>

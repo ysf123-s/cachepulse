@@ -1,0 +1,51 @@
+# 演示接入方：作为订阅的接收端，库存降到 0 时生成缺货待办。
+server:
+  port: ${SERVER_PORT:18095}
+  address: ${SERVER_ADDRESS:127.0.0.1}
+
+spring:
+  application:
+    name: demo-inventory-service
+  config:
+    import:
+      - optional:file:./cachepulse-local.yml
+      # 默认从 Nacos 读取，Nacos 不可用时启动失败。不连 Nacos 时（测试、临时排查）用
+      # --cachepulse.config-prefix=optional:file:./config/nacos/ 直接读仓库里的同一份配置。
+      - ${cachepulse.config-prefix:nacos:}cachepulse-common.yaml
+      - ${cachepulse.config-prefix:nacos:}demo-inventory-service.yaml
+  cloud:
+    nacos:
+      discovery:
+        server-addr: ${NACOS_ADDR:127.0.0.1:18848}
+        namespace: ${NACOS_NAMESPACE:cachepulse}
+        username: ${NACOS_USERNAME:nacos}
+        password: ${NACOS_PASSWORD:}
+      config:
+        server-addr: ${NACOS_ADDR:127.0.0.1:18848}
+        namespace: ${NACOS_NAMESPACE:cachepulse}
+        username: ${NACOS_USERNAME:nacos}
+        password: ${NACOS_PASSWORD:}
+        file-extension: yaml
+  datasource:
+    url: jdbc:mysql://${MYSQL_HOST:127.0.0.1}:${MYSQL_PORT:3306}/demo_db?useSSL=false&serverTimezone=Asia/Shanghai&allowPublicKeyRetrieval=true
+    username: ${MYSQL_USER:demo}
+    password: ${MYSQL_PASSWORD:}
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    hikari:
+      maximum-pool-size: 2
+      keepalive-time: 60000
+      validation-timeout: 1000
+
+cachepulse:
+  internal-token: ${CACHEPULSE_INTERNAL_TOKEN:}
+
+# 日志默认带应用名和 [traceId-spanId]（Spring Boot 3.5 的 logging.pattern.correlation），按天滚动
+logging:
+  file:
+    name: ${LOG_DIR:logs}/${spring.application.name}.log
+  logback:
+    rollingpolicy:
+      file-name-pattern: ${LOG_DIR:logs}/${spring.application.name}.%d{yyyy-MM-dd}.%i.log
+      max-history: 7
+  level:
+    com.cachepulse: INFO

@@ -1,0 +1,3 @@
+# 归档服务。归档的表是启动参数（启动时读表结构、保存快照），改了要重启。
+platform:
+  tables: [users, departments, inventory]

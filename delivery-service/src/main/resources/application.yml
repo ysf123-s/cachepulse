@@ -1,0 +1,94 @@
+# 投递服务。公共配置在 Nacos 的 cachepulse-common.yaml，订阅目标地址等在 delivery-service.yaml，密码只从环境变量读取。
+server:
+  port: ${SERVER_PORT:18093}
+  address: ${SERVER_ADDRESS:127.0.0.1}
+
+spring:
+  application:
+    name: delivery-service
+  config:
+    import:
+      - optional:file:./cachepulse-local.yml
+      # 默认从 Nacos 读取，Nacos 不可用时启动失败。不连 Nacos 时（测试、临时排查）用
+      # --cachepulse.config-prefix=optional:file:./config/nacos/ 直接读仓库里的同一份配置。
+      - ${cachepulse.config-prefix:nacos:}cachepulse-common.yaml
+      - ${cachepulse.config-prefix:nacos:}delivery-service.yaml
+  cloud:
+    nacos:
+      discovery:
+        server-addr: ${NACOS_ADDR:127.0.0.1:18848}
+        namespace: ${NACOS_NAMESPACE:cachepulse}
+        username: ${NACOS_USERNAME:nacos}
+        password: ${NACOS_PASSWORD:}
+      config:
+        server-addr: ${NACOS_ADDR:127.0.0.1:18848}
+        namespace: ${NACOS_NAMESPACE:cachepulse}
+        username: ${NACOS_USERNAME:nacos}
+        password: ${NACOS_PASSWORD:}
+        file-extension: yaml
+  datasource:
+    # 业务库只读：读表结构（生成去重键要主键列，校验订阅要字段列表）
+    url: jdbc:mysql://${MYSQL_HOST:127.0.0.1}:${MYSQL_PORT:3306}/demo_db?useSSL=false&serverTimezone=Asia/Shanghai&allowPublicKeyRetrieval=true
+    username: ${MYSQL_USER:demo}
+    password: ${MYSQL_PASSWORD:}
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    hikari:
+      maximum-pool-size: 2
+      keepalive-time: 60000
+      validation-timeout: 1000
+
+canal:
+  destination: example
+  mq:
+    kafka:
+      servers: ${KAFKA_BOOTSTRAP:127.0.0.1:9092}
+      topic: example
+      # 只用来和平台消费组比较，防止重名；投递服务不消费这个组
+      group-id: cachepulse-cache-sync
+      batch-size: 500
+      poll-timeout-ms: 50
+      flat-message: false
+
+platform:
+  binlog-time-zone: ${CANAL_BINLOG_TIME_ZONE:Asia/Shanghai}
+  # 和归档服务相同，同一条 binlog 在两个服务里得到同一个 eventId
+  source-id: ${PLATFORM_SOURCE_ID:local-mysql-v1}
+  database: demo_db
+  group-id: cachepulse-delivery
+  tables: [users, departments, inventory]
+  max-attempts: 3
+  lease-seconds: 30
+  backoff-initial-seconds: 5
+  enabled-examples: [stockout]
+  targets:
+    demo-webhook:
+      url: ${DEMO_WEBHOOK_URL:http://127.0.0.1:18093/platform/demo/webhook}
+      timeout-ms: 5000
+    stockout-workbench:
+      url: ${STOCKOUT_TARGET_URL:http://127.0.0.1:18095/warehouse/stockout-events}
+      timeout-ms: 5000
+  datasource:
+    url: jdbc:mysql://${MYSQL_HOST:127.0.0.1}:${MYSQL_PORT:3306}/cp_delivery?useSSL=false&serverTimezone=Asia/Shanghai&allowPublicKeyRetrieval=true
+    username: ${PLATFORM_MYSQL_USER:${MYSQL_USER:demo}}
+    password: ${PLATFORM_MYSQL_PASSWORD:${MYSQL_PASSWORD:}}
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    hikari:
+      maximum-pool-size: 4
+      connection-timeout: 5000
+      keepalive-time: 60000
+      validation-timeout: 1000
+
+cachepulse:
+  cache-sync-group: cachepulse-cache-sync
+  internal-token: ${CACHEPULSE_INTERNAL_TOKEN:}
+
+# 日志默认带应用名和 [traceId-spanId]（Spring Boot 3.5 的 logging.pattern.correlation），按天滚动
+logging:
+  file:
+    name: ${LOG_DIR:logs}/${spring.application.name}.log
+  logback:
+    rollingpolicy:
+      file-name-pattern: ${LOG_DIR:logs}/${spring.application.name}.%d{yyyy-MM-dd}.%i.log
+      max-history: 7
+  level:
+    com.cachepulse: INFO

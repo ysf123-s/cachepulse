@@ -119,40 +119,8 @@ services:
       - ./docker/canal/example/instance.properties:/home/admin/canal-server/conf/example/instance.properties:ro
       - canal-logs:/home/admin/canal-server/logs
 
-  # 可选：把应用也放进同一条 compose 里启动
-  # 用法：docker compose --profile app up -d --build
-  app:
-    profiles: ["app"]
-    build:
-      context: .
-      dockerfile: Dockerfile
-    container_name: canal-demo-app
-    restart: unless-stopped
-    mem_limit: 512m
-    memswap_limit: 576m
-    depends_on:
-      mysql:
-        condition: service_healthy
-      redis:
-        condition: service_healthy
-      canal:
-        condition: service_started
-    environment:
-      MYSQL_HOST: mysql
-      JAVA_TOOL_OPTIONS: "-Xms64m -Xmx192m"
-      MYSQL_PORT: "3306"
-      MYSQL_DB: ${MYSQL_DB:-demo_db}
-      MYSQL_USER: ${MYSQL_USER:-demo}
-      MYSQL_PASSWORD: ${MYSQL_PASSWORD:-demo}
-      REDIS_HOST: redis
-      REDIS_PORT: "6379"
-      REDIS_DB: "0"
-      KAFKA_BOOTSTRAP: kafka:9092
-      PLATFORM_ENABLED: ${PLATFORM_ENABLED:-true}
-      PLATFORM_MYSQL_USER: ${PLATFORM_MYSQL_USER:-demo}
-      PLATFORM_MYSQL_PASSWORD: ${PLATFORM_MYSQL_PASSWORD:-demo}
-    ports:
-      - "8081:8081"
+  # 这里只起中间件。CachePulse 的 Nacos 和 6 个服务用 scripts/local/start.ps1 在本机启动；
+  # 单个服务的镜像见 Dockerfile（--build-arg SERVICE=<服务名>）。
 
 volumes:
   mysql-data:
