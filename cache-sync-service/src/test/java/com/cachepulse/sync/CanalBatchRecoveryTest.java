@@ -42,7 +42,7 @@ import static org.mockito.Mockito.*;
 class CanalBatchRecoveryTest {
     private final CanalConnectorWrapper connector = mock(CanalConnectorWrapper.class);
     private final CanalConnectorWrapper.PartitionConsumer consumer = mock(CanalConnectorWrapper.PartitionConsumer.class);
-    private final CacheGroups processor = mock(CacheGroups.class);
+    private final CacheGroups processor = mock(CacheGroups.class, CALLS_REAL_METHODS);
     private final RedisTemplate<String, String> redis = mock(RedisTemplate.class);
     private final VersionControllerWithLua versions = new VersionControllerWithLua(redis);
     private final AutoCacheConfig config = new AutoCacheConfig();
@@ -51,6 +51,7 @@ class CanalBatchRecoveryTest {
 
     @BeforeEach
     void setUp() {
+        config.setDatabase("demo_db");
         config.setTable("users");
         config.setIdField("id");
         config.setKeyTemplate("user:#id");
@@ -194,6 +195,26 @@ class CanalBatchRecoveryTest {
         assertThat(metrics.get("canal.cache.purged").counter().count()).isEqualTo(2);
     }
 
+    /** 设计文档第 6.6 节：别的库里同名的表被清空、删除时不清这边的缓存；SQL 里点名了本库的表时照清。 */
+    @ParameterizedTest
+    @CsvSource(delimiter = '|', value = {
+            "users|TRUNCATE|TRUNCATE TABLE users|false",
+            "users|ERASE|DROP TABLE `other_db`.`users`|false",
+            "users_old|RENAME|RENAME TABLE users TO users_old|false",
+            "users_old|RENAME|RENAME TABLE `demo_db`.`users` TO `other_db`.`users_old`|true"})
+    void ddlInAnotherDatabasePurgesOnlyWhenItNamesThisDatabase(String headerTable, CanalEntry.EventType type, String sql,
+                                                               boolean purges) {
+        when(consumer.getRecordsWithoutAck()).thenReturn(List.of(recordOf(ddlEntry("other_db", headerTable, type, sql))));
+        when(redis.execute(any(RedisScript.class), eq(List.of()), any(Object[].class)))
+                .thenReturn(List.of("0", List.of("user:1", "user:2")));
+        when(redis.unlink(List.of("user:1", "user:2"))).thenReturn(2L);
+
+        assertThat(service.processBatch(consumer)).isTrue();
+
+        verify(redis, times(purges ? 1 : 0)).unlink(List.of("user:1", "user:2"));
+        verify(consumer).ack();
+    }
+
     @Test
     void heartbeatCountsOnlyAfterItsBatchIsAcknowledgedAndNeverTouchesTheCache() {
         CdcHeartbeatMonitor monitor = heartbeatMonitor();
@@ -275,7 +296,7 @@ class CanalBatchRecoveryTest {
         assertThat(withBloom.processBatch(consumer)).isTrue();
 
         var order = inOrder(pubSub, consumer);
-        order.verify(pubSub).convertAndSend(CacheKeys.bloomChannel("users"), "42");
+        order.verify(pubSub).convertAndSend(CacheKeys.bloomChannel("demo_db", "users"), "42");
         order.verify(consumer).ack();
     }
 
@@ -283,8 +304,18 @@ class CanalBatchRecoveryTest {
     void groupsWithoutBloomFilterAreNotBroadcast() {
         StringRedisTemplate pubSub = mock(StringRedisTemplate.class);
 
-        new BloomPublisher(pubSub, processor).add("users", 42L);
-        new BloomPublisher(pubSub, processor).add("orders", 42L);
+        new BloomPublisher(pubSub, processor).add("demo_db", "users", 42L);
+        new BloomPublisher(pubSub, processor).add("demo_db", "orders", 42L);
+
+        verifyNoInteractions(pubSub);
+    }
+
+    @Test
+    void sameTableNameInAnotherDatabaseIsNotBroadcast() {
+        config.setBloomFilter(true);
+        StringRedisTemplate pubSub = mock(StringRedisTemplate.class);
+
+        new BloomPublisher(pubSub, processor).add("other_db", "users", 42L);
 
         verifyNoInteractions(pubSub);
     }
@@ -433,7 +464,11 @@ class CanalBatchRecoveryTest {
     }
 
     private static CanalEntry.Entry ddlEntry(String table, CanalEntry.EventType type, String sql) {
-        return entry(table, CanalEntry.RowChange.newBuilder().setEventType(type).setIsDdl(true)
+        return ddlEntry("demo_db", table, type, sql);
+    }
+
+    private static CanalEntry.Entry ddlEntry(String schema, String table, CanalEntry.EventType type, String sql) {
+        return entry(schema, table, CanalEntry.RowChange.newBuilder().setEventType(type).setIsDdl(true)
                 .setSql(sql).build().toByteString());
     }
 
@@ -449,8 +484,12 @@ class CanalBatchRecoveryTest {
     }
 
     private static CanalEntry.Entry entry(String table, ByteString storeValue) {
+        return entry("demo_db", table, storeValue);
+    }
+
+    private static CanalEntry.Entry entry(String schema, String table, ByteString storeValue) {
         return CanalEntry.Entry.newBuilder()
-                .setHeader(CanalEntry.Header.newBuilder().setTableName(table)
+                .setHeader(CanalEntry.Header.newBuilder().setSchemaName(schema).setTableName(table)
                         .setLogfileName("mysql-bin.000001").setLogfileOffset(100L))
                 .setEntryType(CanalEntry.EntryType.ROWDATA).setStoreValue(storeValue).build();
     }

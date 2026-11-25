@@ -25,7 +25,7 @@ class SyncStatusTest {
     private final CanalConnectorWrapper connector = mock(CanalConnectorWrapper.class);
     private final CanalConnectorWrapper.PartitionConsumer consumer = mock(CanalConnectorWrapper.PartitionConsumer.class);
     private final CanalCacheSyncService service = new CanalCacheSyncService(connector,
-            new BinlogParser(), new FlatMessageBinlogParser(), mock(CacheGroups.class),
+            new BinlogParser(), new FlatMessageBinlogParser(), mock(CacheGroups.class, CALLS_REAL_METHODS),
             mock(VersionControllerWithLua.class), mock(BigKeyDetector.class), mock(RedisTemplate.class),
             new ObjectMapper(), new SimpleMeterRegistry());
 

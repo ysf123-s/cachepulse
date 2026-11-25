@@ -1,6 +1,5 @@
 package com.cachepulse.cache.starter;
 
-import com.cachepulse.cache.core.PrimaryKeySink;
 import com.cachepulse.cache.model.AutoCacheConfig;
 
 import jakarta.annotation.PreDestroy;
@@ -25,7 +24,7 @@ import java.util.TreeMap;
  */
 @Slf4j
 @Component
-public class PrimaryKeyFilters implements PrimaryKeySink {
+public class PrimaryKeyFilters {
     /** approximateCount 是过滤器里不同主键的近似数，超过 expectedInsertions 后误判率上升。 */
     public record FilterStatus(boolean ready, long approximateCount, long expectedInsertions, long bits, int hashes,
                                Long buildMillis, String error) {
@@ -91,7 +90,7 @@ public class PrimaryKeyFilters implements PrimaryKeySink {
     }
 
     /** CDC 新增或修改行时调用；主键不是整数时忽略。 */
-    @Override
+    /** 加入一个主键：启动读库时、以及收到同步服务的新增主键广播时（{@link BloomBroadcastListener}）。 */
     public void add(String table, Object id) {
         Entry entry = filters.get(table);
         if (entry == null || id == null) {

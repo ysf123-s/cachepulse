@@ -79,7 +79,7 @@ class CachePrimaryKeyChangeTest {
             config.setTable("users"); config.setIdField("id"); config.setKeyTemplate("user:#id");
             config.setStrategy(CacheStrategy.DELETE_MODE); config.setExpireSeconds(1800);
             config.setEnableVersionControl(versionControl);
-            var groups = mock(CacheGroups.class);
+            var groups = mock(CacheGroups.class, CALLS_REAL_METHODS);
             when(groups.getConfig("users")).thenReturn(config);
             sync = new CanalCacheSyncService(mock(CanalConnectorWrapper.class), new BinlogParser(),
                     new FlatMessageBinlogParser(), groups, versions, mock(BigKeyDetector.class), redis,

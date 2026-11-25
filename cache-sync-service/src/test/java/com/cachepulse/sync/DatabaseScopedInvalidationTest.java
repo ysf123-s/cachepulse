@@ -28,7 +28,7 @@ class DatabaseScopedInvalidationTest {
 
     DatabaseScopedInvalidationTest() {
         AutoCacheConfig users = MultiTableCacheTest.group("users", "user:#id", 1800, "user-email:#email").toConfig();
-        CacheGroups groups = mock(CacheGroups.class);
+        CacheGroups groups = mock(CacheGroups.class, CALLS_REAL_METHODS);
         when(groups.getConfig("users")).thenReturn(users);
         SimpleMeterRegistry metrics = new SimpleMeterRegistry();
         ObjectMapper json = new ObjectMapper();

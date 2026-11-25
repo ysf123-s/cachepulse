@@ -1,7 +1,7 @@
 # CachePulse 微服务拆分设计
 
 - 更新日期：2026-11-24
-- 状态：第 2～5 步完成。代码按第 14 节第 7 条先写完、再统一测试；实现时的调整、部署和实测结果见第 14.1 节。2026-11-25：原单体的测试已迁到各模块（417 项通过，38 项需要外部依赖自动跳过），过渡模块已删除，CI 加上了页面脚本测试。
+- 状态：第 2～5 步完成。代码按第 14 节第 7 条先写完、再统一测试；实现时的调整、部署和实测结果见第 14.1 节。2026-11-25：原单体的测试已迁到各模块（430 项通过，38 项需要外部依赖自动跳过），过渡模块已删除，CI 加上了页面脚本测试。
 - 范围：从过渡模块 `cachepulse-monolith` 拆成微服务（第 2～5 步）、部署与切换（第 7 步）。余量场景（第 6 步）另出设计。
 
 ## 1. 目标与原则
@@ -269,7 +269,7 @@
 - 身份透传：网关校验 JWT 后，先删掉客户端自带的 `X-User-Id`，再按 JWT 写入。实测客户端伪造 `X-User-Id: hacker`，下游收到的是 JWT 里的 `admin`。下游服务只认网关写入的身份头。
 - 路由级熔断和降级：每条路由加 `CircuitBreaker` 过滤器，下游超时或熔断时返回 503（格式见第 9.5 节）。网关这一层的 TimeLimiter 默认只给 1 秒：实测 2 秒才响应的下游，1086ms 就返回了降级。所以要按路由显式设置超时，并和网关 HTTP 客户端的响应超时保持一致。
 - traceId：网关生成 trace，通过 `traceparent` 传给下游（实测通过），同时写到响应头 `X-Trace-Id`，方便拿着 traceId 查日志。
-- 限流：Gateway 自带的 `RequestRateLimiter` 加 `RedisRateLimiter`，用 Redis DB 1，需要在 Redis 6.2 上验证。
+- 限流：Gateway 自带的 `RequestRateLimiter` 加 `RedisRateLimiter`，用 Redis DB 1，需要在 Redis 6.2 上验证。按客户端 IP 计数，IP 取最前面那层反向代理写入的请求头（第 14.1 节第 12 条）。
 - 两个管理页面由网关托管，页面里的接口地址改为 `/api/...`。
 
 ### 9.3 服务间调用（OpenFeign + Resilience4j）
@@ -436,8 +436,8 @@ Instabox 现在可用 4.9GiB，共存期间原应用继续运行也放得下，�
 12. **测试迁移时发现的问题（2026-11-25）**：
     - 已修：`cachepulse-framework` 自建的 `ObjectMapper` 没注册 ProblemDetail 的 mixin，真实服务的错误体把 `code`、`traceId` 套在 `properties` 里，Feign 错误解码读不到下游的错误码。已注册 `ProblemDetailJacksonMixin`（其他 JSON 不变，表结构快照 ID 不受影响），归档服务的启动测试检查了真实错误体。
     - 已修（部署后在服务器上发现）：控制器抛的 `ResponseStatusException` 被 Spring Boot 自带的 `ProblemDetailsExceptionHandler` 先处理，错误体没有 `code`、`traceId`。原因是框架的自动配置排在 `WebMvcAutoConfiguration` 之后，Spring Boot 没看到我们的处理器就注册了自己的。已把框架排到它前面，并给 Spring 自带异常补上 `code`（HTTP 状态名）和 `traceId`。
-    - 待改：`RegistryCacheGroups` 按表名存分组，不同库的同名表会互相覆盖；DDL 清缓存（`handleDdl`）不看库名，别的库的同名表 TRUNCATE 会多清一次缓存（只多查库，不会读到旧数据）。第 6 步加业务库前要改成 `库名.表名`。
-    - 待改：布隆广播的频道是 `cachepulse:bloom:{表名}`，第 6.3 节写的是 `{库名.表名}`；接入组件和同步服务用法一致，只是文档和代码不同，和上一条一起改。
+    - 已修（2026-11-25）：分组改按 `库名.表名` 存（`RegistryCacheGroups`），不同库的同名表各是一个分组；行事件、DDL 清缓存、新增主键广播都按 `库名.表名` 匹配。DDL 清缓存的库名取事件所在的库和 SQL 里出现的库名，拿不准时宁可多清。新增主键的广播频道改为 `cachepulse:bloom:{库名}.{表名}`，和第 6.3 节一致，接入组件只收本服务所连库里的分组。管理接口照旧可以只写表名，同一个表名在多个库都有分组时要写 `库名.表名`（否则返回 400）。
+    - 已修（2026-11-25）：公网的查询限流原来按连接来源计数，而公网请求经华为云 Nginx → Instabox 端口转发 → 本机 TCP 转发进来，网关看到的来源都是 `172.19.0.1`，所有外网用户共用一个额度。改为按华为云 Nginx 写入的 `X-CachePulse-Client-IP`（`$remote_addr`，会覆盖客户端自带的值）计数，网关用 `cachepulse.gateway.client-ip-header` 配置这个头；没有这个头时仍按连接来源。网关只能经这层代理从公网访问，所以这个头可信。
     - 刷新、混合策略的代码（`doRefresh`、`doHybrid`、`toCacheJson`）在拆分后走不到（第 6.9 节），保留到以后恢复刷新策略时再用。
 
 ## 15. 与原项目的对比

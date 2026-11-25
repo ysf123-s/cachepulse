@@ -13,10 +13,12 @@ import java.util.Base64;
  * @param jwtSecret         HS256 密钥，Base64，原文至少 32 字节
  * @param tokenTtl          令牌有效期，默认 30 分钟
  * @param trustedProxies    X-Forwarded-For 里信任的代理层数，用于按客户端 IP 限流；直接对外暴露时设为 0
+ * @param clientIpHeader    最前面那层反向代理写入客户端 IP 的请求头（如 X-CachePulse-Client-IP）；为空时不用，
+ *                          见 {@link RateLimitConfiguration}
  */
 @ConfigurationProperties("cachepulse.gateway")
 public record GatewayProperties(String adminUsername, String adminPasswordHash, String jwtSecret,
-                                Duration tokenTtl, Integer trustedProxies) {
+                                Duration tokenTtl, Integer trustedProxies, String clientIpHeader) {
 
     public GatewayProperties {
         if (adminUsername == null || adminUsername.isBlank()) {

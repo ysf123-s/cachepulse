@@ -19,10 +19,12 @@ public class BloomPublisher implements PrimaryKeySink {
     }
 
     @Override
-    public void add(String table, Object id) {
-        AutoCacheConfig config = groups.getConfig(table);
+    public void add(String database, String table, Object id) {
+        AutoCacheConfig config = groups.getConfig(database, table);
         if (config != null && config.isBloomFilter() && id != null) {
-            redis.convertAndSend(CacheKeys.bloomChannel(table), String.valueOf(id));
+            String db = config.getDatabase() != null ? config.getDatabase() : database;
+            redis.convertAndSend(CacheKeys.bloomChannel(db, config.getTable() != null ? config.getTable() : table),
+                    String.valueOf(id));
         }
     }
 }

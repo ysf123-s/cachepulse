@@ -14,7 +14,7 @@ class GatewayPropertiesTest {
 
     @Test
     void defaultsUsernameTtlAndTrustedProxies() {
-        GatewayProperties properties = new GatewayProperties(null, HASH, secret(32), null, null);
+        GatewayProperties properties = new GatewayProperties(null, HASH, secret(32), null, null, null);
 
         assertThat(properties.adminUsername()).isEqualTo("admin");
         assertThat(properties.tokenTtl()).isEqualTo(Duration.ofMinutes(30));
@@ -23,28 +23,28 @@ class GatewayPropertiesTest {
 
     @Test
     void acceptsA32ByteSecret() {
-        assertThat(new GatewayProperties("admin", HASH, secret(32), null, 0).jwtKey()).hasSize(32);
+        assertThat(new GatewayProperties("admin", HASH, secret(32), null, 0, null).jwtKey()).hasSize(32);
     }
 
     @Test
     void rejectsAShortOrMissingJwtSecret() {
-        assertThatThrownBy(() -> new GatewayProperties("admin", HASH, secret(31), null, 0).jwtKey())
+        assertThatThrownBy(() -> new GatewayProperties("admin", HASH, secret(31), null, 0, null).jwtKey())
                 .isInstanceOf(IllegalStateException.class).hasMessageContaining("at least 32 bytes");
-        assertThatThrownBy(() -> new GatewayProperties("admin", HASH, " ", null, 0).jwtKey())
+        assertThatThrownBy(() -> new GatewayProperties("admin", HASH, " ", null, 0, null).jwtKey())
                 .isInstanceOf(IllegalStateException.class).hasMessageContaining("required");
-        assertThatThrownBy(() -> new GatewayProperties("admin", HASH, null, null, 0).jwtKey())
+        assertThatThrownBy(() -> new GatewayProperties("admin", HASH, null, null, 0, null).jwtKey())
                 .isInstanceOf(IllegalStateException.class).hasMessageContaining("required");
     }
 
     @Test
     void acceptsABcryptHash() {
-        assertThat(new GatewayProperties("admin", HASH, secret(32), null, 0).requiredPasswordHash()).isEqualTo(HASH);
+        assertThat(new GatewayProperties("admin", HASH, secret(32), null, 0, null).requiredPasswordHash()).isEqualTo(HASH);
     }
 
     @Test
     void rejectsAPlainPasswordOrMissingHash() {
         for (String hash : new String[]{"correct horse battery", "{noop}secret", "", null}) {
-            assertThatThrownBy(() -> new GatewayProperties("admin", hash, secret(32), null, 0).requiredPasswordHash())
+            assertThatThrownBy(() -> new GatewayProperties("admin", hash, secret(32), null, 0, null).requiredPasswordHash())
                     .as(String.valueOf(hash))
                     .isInstanceOf(IllegalStateException.class).hasMessageContaining("BCrypt");
         }

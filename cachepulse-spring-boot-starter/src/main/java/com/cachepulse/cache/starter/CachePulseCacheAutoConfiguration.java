@@ -13,8 +13,6 @@ import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.data.redis.listener.PatternTopic;
 import org.springframework.data.redis.listener.RedisMessageListenerContainer;
 
-import java.nio.charset.StandardCharsets;
-
 /** 接入组件自动配置：业务服务引用 starter 后即可通过 CacheQueryService 读缓存。 */
 @AutoConfiguration(after = RedisAutoConfiguration.class)
 @ComponentScan("com.cachepulse.cache.starter")
@@ -39,19 +37,12 @@ public class CachePulseCacheAutoConfiguration {
 
     /** 同步服务广播的新增主键加入本地布隆过滤器；消息丢了只会让刚插入的行多走一次窄通道。 */
     @Bean
-    public RedisMessageListenerContainer cachePulseBloomListener(RedisConnectionFactory factory, PrimaryKeyFilters filters) {
+    public RedisMessageListenerContainer cachePulseBloomListener(RedisConnectionFactory factory,
+                                                                 CacheAnnotationProcessor groups, PrimaryKeyFilters filters) {
         RedisMessageListenerContainer container = new RedisMessageListenerContainer();
         container.setConnectionFactory(factory);
-        container.addMessageListener((message, pattern) -> {
-            String channel = new String(message.getChannel(), StandardCharsets.UTF_8);
-            String table = channel.substring(CacheKeys.BLOOM_CHANNEL_PREFIX.length());
-            String body = new String(message.getBody(), StandardCharsets.UTF_8);
-            try {
-                filters.add(table, Long.parseLong(body));
-            } catch (NumberFormatException ignored) {
-                // 主键不是整数的表不维护布隆过滤器
-            }
-        }, new PatternTopic(CacheKeys.BLOOM_CHANNEL_PREFIX + "*"));
+        container.addMessageListener(new BloomBroadcastListener(groups, filters),
+                new PatternTopic(CacheKeys.BLOOM_CHANNEL_PREFIX + "*"));
         return container;
     }
 }

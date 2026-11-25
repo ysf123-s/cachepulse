@@ -99,7 +99,7 @@ class CacheIndexInvalidationTest {
         config.setIndexKeys(List.of(AutoCacheConfig.IndexKey.parse("user-email:#email")));
         config.setStrategy(CacheStrategy.DELETE_MODE);
         config.setExpireSeconds(1800);
-        CacheGroups processor = mock(CacheGroups.class);
+        CacheGroups processor = mock(CacheGroups.class, CALLS_REAL_METHODS);
         when(processor.getConfig("users")).thenReturn(config);
         return new CanalCacheSyncService(mock(CanalConnectorWrapper.class), new BinlogParser(),
                 new FlatMessageBinlogParser(), processor, versions, mock(BigKeyDetector.class), redis,

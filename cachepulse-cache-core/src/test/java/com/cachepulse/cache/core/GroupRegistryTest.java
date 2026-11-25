@@ -119,7 +119,27 @@ class GroupRegistryTest {
         assertThatThrownBy(() -> CacheKeys.requireNotReserved("cachepulse:users:")).isInstanceOf(IllegalStateException.class);
         assertThatThrownBy(() -> CacheKeys.requireNotReserved("cache")).isInstanceOf(IllegalStateException.class);
         assertThatCode(() -> CacheKeys.requireNotReserved("user:")).doesNotThrowAnyException();
-        assertThat(CacheKeys.bloomChannel("demo_db.users")).isEqualTo("cachepulse:bloom:demo_db.users");
+        assertThat(CacheKeys.bloomChannel("demo_db", "users")).isEqualTo("cachepulse:bloom:demo_db.users");
+        assertThat(CacheKeys.parseBloomChannel("cachepulse:bloom:demo_db.users")).containsExactly("demo_db", "users");
+        assertThat(CacheKeys.parseBloomChannel("cachepulse:bloom:users")).isNull();
+        assertThat(CacheKeys.parseBloomChannel("cachepulse:bloom:demo_db.")).isNull();
+        assertThat(CacheKeys.parseBloomChannel("other:demo_db.users")).isNull();
+    }
+
+    @Test
+    void defaultLookupChecksTheDatabaseOfASingleDatabaseService() {
+        com.cachepulse.cache.model.AutoCacheConfig users = group("users", "user:#id", CacheStrategy.DELETE_MODE).toConfig();
+        CacheGroups single = new CacheGroups() {
+            @Override public com.cachepulse.cache.model.AutoCacheConfig getConfig(String table) {
+                return "users".equals(table) ? users : null;
+            }
+            @Override public java.util.Set<String> getAllTables() { return java.util.Set.of("users"); }
+        };
+
+        assertThat(single.getConfig("demo_db", "users")).isSameAs(users);
+        assertThat(single.getConfig("other_db", "users")).isNull();
+        assertThat(single.getConfig(null, "users")).isSameAs(users);
+        assertThat(single.getConfig("demo_db", "orders")).isNull();
     }
 
     private static CacheGroupDescriptor group(String table, String keyTemplate, CacheStrategy strategy) {

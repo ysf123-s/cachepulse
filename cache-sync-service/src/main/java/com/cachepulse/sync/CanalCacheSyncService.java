@@ -36,7 +36,9 @@ import org.springframework.stereotype.Service;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.EnumSet;
+import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Locale;
@@ -459,9 +461,9 @@ public class CanalCacheSyncService {
     public void handleEvent(BinlogEvent event) {
         String tableName = event.getTableName();
 
-        AutoCacheConfig config = cacheAnnotationProcessor.getConfig(tableName);
-        // Canal 可能捕获多个库，按 库名.表名 匹配，避免别的库里同名的表误删缓存。
-        if (config == null || (config.getDatabase() != null && !config.getDatabase().equals(event.getDatabaseName()))) {
+        // Canal 可能捕获多个库，按 库名.表名 匹配，避免别的库里同名的表误删缓存（设计文档第 6.6 节）。
+        AutoCacheConfig config = cacheAnnotationProcessor.getConfig(event.getDatabaseName(), tableName);
+        if (config == null) {
             return;
         }
 
@@ -487,7 +489,7 @@ public class CanalCacheSyncService {
 
         // 新增（或改主键）的行加入主键布隆过滤器；重复加入无影响，整批重试时也安全。
         if (event.getEventType() != EventType.DELETE) {
-            primaryKeys.add(tableName, idValue);
+            primaryKeys.add(event.getDatabaseName(), tableName, idValue);
         }
         String cacheKey = config.buildCacheKeySimple(idValue);
         executeStrategy(config, event, cacheKey, partialImage ? null : targetData);
@@ -543,10 +545,11 @@ public class CanalCacheSyncService {
         if (!PURGE_DDL_TYPES.contains(event.getEventType())) {
             return;
         }
-        for (String table : registeredTablesIn(event)) {
-            long purged = namespacePurger.purge(table, cacheAnnotationProcessor.getConfig(table));
+        for (AutoCacheConfig config : registeredGroupsIn(event)) {
+            String group = config.getDatabase() + "." + config.getTable();
+            long purged = namespacePurger.purge(config.getTable(), config);
             purgedCounter.increment(purged);
-            log.info("Purged {} cache keys of table {} after {}: {}", purged, table,
+            log.info("Purged {} cache keys of {} after {}: {}", purged, group,
                     event.getEventType(), event.getDdlSql());
         }
     }
@@ -554,9 +557,11 @@ public class CanalCacheSyncService {
     /**
      * 一条 DDL 可能涉及多张表，事件表名不一定是被清空的那张：线上实测 Canal 对 RENAME 给出新表名，
      * 把已注册表改走（含 gh-ost/pt-osc 的 RENAME a TO a_old, a_new TO a）时事件表名不是它；DROP 也可一次删多张表。
-     * 因此再从 SQL 中找出所有已注册表名。多清只多一次回源，漏清会留下旧缓存。
+     * 因此再从 SQL 中找出所有标识符。分组按 库名.表名 匹配：库名取事件所在的库，以及 SQL 里出现的库名
+     * （如 RENAME TABLE demo_db.users TO other_db.users_old），所以别的库里同名的表被清空时不会清这边的缓存。
+     * 多清只多一次回源，漏清会留下旧缓存，所以拿不准时宁可多清。
      */
-    private Set<String> registeredTablesIn(BinlogEvent event) {
+    private Collection<AutoCacheConfig> registeredGroupsIn(BinlogEvent event) {
         Set<String> names = new LinkedHashSet<>();
         names.add(event.getTableName());
         if (event.getDdlSql() != null) {
@@ -567,8 +572,19 @@ public class CanalCacheSyncService {
                 names.add(name.toLowerCase(Locale.ROOT));
             }
         }
-        names.removeIf(name -> name == null || cacheAnnotationProcessor.getConfig(name) == null);
-        return names;
+        names.remove(null);
+        Set<String> databases = new LinkedHashSet<>(names);
+        databases.add(event.getDatabaseName());
+        Map<String, AutoCacheConfig> groups = new LinkedHashMap<>();
+        for (String database : databases) {
+            for (String table : names) {
+                AutoCacheConfig config = cacheAnnotationProcessor.getConfig(database, table);
+                if (config != null) {
+                    groups.putIfAbsent(config.getDatabase() + "." + config.getTable(), config);
+                }
+            }
+        }
+        return groups.values();
     }
 
     /**

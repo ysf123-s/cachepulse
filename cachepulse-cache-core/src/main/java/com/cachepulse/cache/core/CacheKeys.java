@@ -14,8 +14,22 @@ public final class CacheKeys {
 
     private CacheKeys() { }
 
-    public static String bloomChannel(String table) {
-        return BLOOM_CHANNEL_PREFIX + table;
+    /** 新增主键的广播频道：cachepulse:bloom:{库名}.{表名}（设计文档第 6.3 节）。 */
+    public static String bloomChannel(String database, String table) {
+        return BLOOM_CHANNEL_PREFIX + database + "." + table;
+    }
+
+    /** 把广播频道拆成 [库名, 表名]；不是这个格式时返回 null。 */
+    public static String[] parseBloomChannel(String channel) {
+        if (channel == null || !channel.startsWith(BLOOM_CHANNEL_PREFIX)) {
+            return null;
+        }
+        String name = channel.substring(BLOOM_CHANNEL_PREFIX.length());
+        int dot = name.indexOf('.');
+        if (dot <= 0 || dot == name.length() - 1) {
+            return null;
+        }
+        return new String[]{name.substring(0, dot), name.substring(dot + 1)};
     }
 
     /** 主键缓存与二级索引缓存共用整表清空和浏览，任意两个命名空间之间不能互为前缀。 */

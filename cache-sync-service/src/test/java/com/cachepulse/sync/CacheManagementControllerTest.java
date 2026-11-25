@@ -29,7 +29,7 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 class CacheManagementControllerTest {
-    private final CacheGroups processor = mock(CacheGroups.class);
+    private final CacheGroups processor = mock(CacheGroups.class, CALLS_REAL_METHODS);
     private final RedisTemplate<String, String> redis = mock(RedisTemplate.class);
     private final HashOperations<String, Object, Object> hashes = mock(HashOperations.class);
     private final CanalCacheSyncService sync = mock(CanalCacheSyncService.class);

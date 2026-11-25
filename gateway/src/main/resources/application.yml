@@ -178,6 +178,8 @@ cachepulse:
     token-ttl: 30m
     # 公网入口前有一层反向代理；直接对外暴露时设为 0
     trusted-proxies: ${GATEWAY_TRUSTED_PROXIES:1}
+    # 最前面那层反向代理写入客户端 IP 的请求头，限流按它计数；为空时不用（见 RateLimitConfiguration）
+    client-ip-header: ${GATEWAY_CLIENT_IP_HEADER:}
 
 management:
   endpoints:

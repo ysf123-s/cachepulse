@@ -25,6 +25,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.CALLS_REAL_METHODS;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -76,7 +77,7 @@ class CanalCacheSyncServiceRecoveryTest {
     void processEventsHandlesPartitionBatchBeforeReturning() throws Exception {
         CanalConnectorWrapper connector = mock(CanalConnectorWrapper.class);
         when(connector.isFlatMessageMode()).thenReturn(false);
-        CacheGroups processor = mock(CacheGroups.class);
+        CacheGroups processor = mock(CacheGroups.class, CALLS_REAL_METHODS);
         AutoCacheConfig config = config(true);
         config.setTable("users");
         config.setIdField("id");
@@ -165,7 +166,7 @@ class CanalCacheSyncServiceRecoveryTest {
                 connector,
                 new BinlogParser(),
                 new FlatMessageBinlogParser(),
-                mock(CacheGroups.class),
+                mock(CacheGroups.class, CALLS_REAL_METHODS),
                 mock(VersionControllerWithLua.class),
                 bigKeyDetector,
                 redisTemplate,
