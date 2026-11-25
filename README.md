@@ -4,7 +4,7 @@
 
 ## 当前状态
 
-微服务拆分已完成（设计文档第 2～5 步）：416 项测试通过（需要外部 Redis、MySQL、Docker 的 38 项自动跳过），已部署在 Instabox 上，公网入口 [cdc.yusf.duckdns.org](https://cdc.yusf.duckdns.org/) 指向网关。原单体已删除。拆分设计和实测结果见 `docs/design/microservice-split.md`（第 14.1 节）。
+微服务拆分已完成（设计文档第 2～5 步）：417 项测试通过（需要外部 Redis、MySQL、Docker 的 38 项自动跳过），已部署在 Instabox 上，公网入口 [cdc.yusf.duckdns.org](https://cdc.yusf.duckdns.org/) 指向网关。原单体已删除。拆分设计和实测结果见 `docs/design/microservice-split.md`（第 14.1 节）。
 
 ## 结构
 

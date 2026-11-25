@@ -57,6 +57,13 @@ class GlobalExceptionHandlerTest {
         expect("service", 503, "UNAVAILABLE", "kafka down");
     }
 
+    @Test
+    void responseStatusExceptionThrownByControllersAlsoGetsCodeAndTraceId() throws Exception {
+        expect("status?code=404", 404, "NOT_FOUND", "Unknown event");
+        expect("status?code=400", 400, "BAD_REQUEST", "Unknown event");
+        expect("status?code=409", 409, "CONFLICT", "Unknown event");
+    }
+
     private void expect(String path, int status, String code, String detail) throws Exception {
         mvc.perform(get("/fail/" + path))
                 .andExpect(status().is(status))
@@ -97,6 +104,12 @@ class GlobalExceptionHandlerTest {
         @GetMapping("/fail/service")
         String service() {
             throw ServiceException.unavailable("kafka down", null);
+        }
+
+        @GetMapping("/fail/status")
+        String status(@RequestParam("code") int code) {
+            throw new org.springframework.web.server.ResponseStatusException(
+                    org.springframework.http.HttpStatusCode.valueOf(code), "Unknown event");
         }
     }
 }

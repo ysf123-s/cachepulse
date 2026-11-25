@@ -73,6 +73,10 @@ class PlatformApplicationTest {
         // 真实服务里的错误体：code、traceId 在顶层（框架的 ObjectMapper 注册了 ProblemDetail mixin），Feign 错误解码靠它们
         assertThat(missing.getBody()).containsEntry("status", 404).containsEntry("code", "NOT_FOUND")
                 .containsKey("traceId").doesNotContainKey("properties");
+        // 控制器抛的 ResponseStatusException 也由框架的处理器统一格式（不能被 Spring Boot 自带的处理器抢先）
+        var unknown = http.getForEntity("/platform/events/" + "0".repeat(64), Map.class);
+        assertThat(unknown.getStatusCode()).isEqualTo(HttpStatus.NOT_FOUND);
+        assertThat(unknown.getBody()).containsEntry("code", "NOT_FOUND").containsKey("traceId");
         assertThat(http.getForEntity("/internal/events/not-a-hash", Map.class).getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
 
         assertThat(http.getForObject("/platform/tables", List.class)).hasSize(1);

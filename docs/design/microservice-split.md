@@ -1,7 +1,7 @@
 # CachePulse 微服务拆分设计
 
 - 更新日期：2026-11-24
-- 状态：第 2～5 步完成。代码按第 14 节第 7 条先写完、再统一测试；实现时的调整、部署和实测结果见第 14.1 节。2026-11-25：原单体的测试已迁到各模块（416 项通过，38 项需要外部依赖自动跳过），过渡模块已删除，CI 加上了页面脚本测试。
+- 状态：第 2～5 步完成。代码按第 14 节第 7 条先写完、再统一测试；实现时的调整、部署和实测结果见第 14.1 节。2026-11-25：原单体的测试已迁到各模块（417 项通过，38 项需要外部依赖自动跳过），过渡模块已删除，CI 加上了页面脚本测试。
 - 范围：从过渡模块 `cachepulse-monolith` 拆成微服务（第 2～5 步）、部署与切换（第 7 步）。余量场景（第 6 步）另出设计。
 
 ## 1. 目标与原则
@@ -434,7 +434,8 @@ Instabox 现在可用 4.9GiB，共存期间原应用继续运行也放得下，�
 
     第 13 节的"kafka-clients 3.9.2、protobuf 3.25.9 处理真实 Canal 消息"和"网关限流在 Redis 6.2 上"已验证。protobuf 3.25.9 读 Canal 的旧生成代码时会打印 `Vulnerable protobuf generated type` 警告，不影响处理。
 12. **测试迁移时发现的问题（2026-11-25）**：
-    - 已修：`cachepulse-framework` 自建的 `ObjectMapper` 没注册 ProblemDetail 的 mixin，真实服务的错误体把 `code`、`traceId` 套在 `properties` 里，Feign 错误解码读不到下游的错误码。已注册 `ProblemDetailJacksonMixin`（其他 JSON 不变，表结构快照 ID 不受影响），归档服务的启动测试检查了真实错误体。**Instabox 上运行的还是修复前的版本。**
+    - 已修：`cachepulse-framework` 自建的 `ObjectMapper` 没注册 ProblemDetail 的 mixin，真实服务的错误体把 `code`、`traceId` 套在 `properties` 里，Feign 错误解码读不到下游的错误码。已注册 `ProblemDetailJacksonMixin`（其他 JSON 不变，表结构快照 ID 不受影响），归档服务的启动测试检查了真实错误体。
+    - 已修（部署后在服务器上发现）：控制器抛的 `ResponseStatusException` 被 Spring Boot 自带的 `ProblemDetailsExceptionHandler` 先处理，错误体没有 `code`、`traceId`。原因是框架的自动配置排在 `WebMvcAutoConfiguration` 之后，Spring Boot 没看到我们的处理器就注册了自己的。已把框架排到它前面，并给 Spring 自带异常补上 `code`（HTTP 状态名）和 `traceId`。
     - 待改：`RegistryCacheGroups` 按表名存分组，不同库的同名表会互相覆盖；DDL 清缓存（`handleDdl`）不看库名，别的库的同名表 TRUNCATE 会多清一次缓存（只多查库，不会读到旧数据）。第 6 步加业务库前要改成 `库名.表名`。
     - 待改：布隆广播的频道是 `cachepulse:bloom:{表名}`，第 6.3 节写的是 `{库名.表名}`；接入组件和同步服务用法一致，只是文档和代码不同，和上一条一起改。
     - 刷新、混合策略的代码（`doRefresh`、`doHybrid`、`toCacheJson`）在拆分后走不到（第 6.9 节），保留到以后恢复刷新策略时再用。

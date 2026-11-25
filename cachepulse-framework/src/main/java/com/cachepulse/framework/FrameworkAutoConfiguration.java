@@ -11,14 +11,19 @@ import org.springframework.boot.autoconfigure.AutoConfiguration;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnWebApplication;
 import org.springframework.boot.autoconfigure.jackson.JacksonAutoConfiguration;
+import org.springframework.boot.autoconfigure.web.servlet.WebMvcAutoConfiguration;
 import org.springframework.boot.web.servlet.FilterRegistrationBean;
 import org.springframework.context.annotation.Bean;
 import org.springframework.core.Ordered;
 import org.springframework.http.ProblemDetail;
 import org.springframework.http.converter.json.ProblemDetailJacksonMixin;
 
-/** 所有 Servlet 服务共用的基础设施。网关是 WebFlux，不引用这个模块。 */
-@AutoConfiguration(before = JacksonAutoConfiguration.class)
+/**
+ * 所有 Servlet 服务共用的基础设施。网关是 WebFlux，不引用这个模块。
+ * 排在 WebMvcAutoConfiguration 之前：Spring Boot 只在没有 ResponseEntityExceptionHandler 时注册自己的
+ * ProblemDetailsExceptionHandler，否则它会先于我们处理 ResponseStatusException，错误体里就没有 code 和 traceId。
+ */
+@AutoConfiguration(before = {JacksonAutoConfiguration.class, WebMvcAutoConfiguration.class})
 @ConditionalOnWebApplication(type = ConditionalOnWebApplication.Type.SERVLET)
 public class FrameworkAutoConfiguration {
 

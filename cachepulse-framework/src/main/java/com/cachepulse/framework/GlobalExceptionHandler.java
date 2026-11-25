@@ -66,11 +66,22 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
         return ResponseEntity.badRequest().body(body);
     }
 
+    /**
+     * Spring 自带的异常（包括控制器抛的 ResponseStatusException）也补上 code 和 traceId：
+     * code 取 HTTP 状态名（NOT_FOUND、BAD_REQUEST 等），和本类其他处理方法一致。
+     */
     @Override
     protected ResponseEntity<Object> createResponseEntity(Object body, HttpHeaders headers, HttpStatusCode status,
                                                           WebRequest request) {
-        if (body instanceof ProblemDetail problem && problem.getProperties() == null) {
-            problem.setProperty("traceId", traceIds.current());
+        if (body instanceof ProblemDetail problem) {
+            Map<String, Object> properties = problem.getProperties();
+            if (properties == null || !properties.containsKey("code")) {
+                HttpStatus resolved = HttpStatus.resolve(status.value());
+                problem.setProperty("code", resolved == null ? "HTTP_" + status.value() : resolved.name());
+            }
+            if (properties == null || !properties.containsKey("traceId")) {
+                problem.setProperty("traceId", traceIds.current());
+            }
         }
         return super.createResponseEntity(body, headers, status, request);
     }
