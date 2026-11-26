@@ -6,7 +6,7 @@
 
 微服务拆分已完成并部署在 Instabox，公网入口 [cdc.yusf.duckdns.org](https://cdc.yusf.duckdns.org/) 指向网关。本机 437 项 Java 测试中 399 项通过，38 项因需要外部 Redis、MySQL 或 Docker 跳过。两套管理页面脚本测试通过。
 
-Instabox 已启用心跳写入失败时的查询降级和 Canal 空批 1 ms 补丁。归档与投递的后台写入节奏控制目前只用于压测，默认关闭。拆分设计和实测结果见 `docs/design/microservice-split.md` 第 14.1 节。
+Instabox 上各服务的行为和提交 `0a997e4` 一致：归档、投递 2026-11-26 用该提交重新部署，其余服务的线上包和它只差默认关闭的压测计时代码。线上已启用心跳写入失败时的查询降级和 Canal 空批 1 ms 补丁。归档与投递的后台写入节奏控制默认关闭，只在压测时打开。拆分设计和实测结果见 `docs/design/microservice-split.md` 第 14.1 节。
 
 ## 结构
 
