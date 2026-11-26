@@ -269,7 +269,7 @@
 
 `/platform/consumers/status` 现在一次返回缓存同步和归档两个消费者的状态。拆分后三个服务各自提供本服务消费者的状态，管理页面分别调用后合并展示；其中一个服务不可用时，其余两项照常显示。
 
-- 签发令牌：网关提供 `POST /auth/token`，用单个管理员账号（密码存 BCrypt 哈希，HS256 密钥从环境变量读），令牌有效期 30 分钟。
+- 签发令牌：网关提供 `POST /auth/token`，用单个管理员账号（密码存 BCrypt 哈希，HS256 密钥从环境变量读），令牌有效期 30 分钟。同一个客户端 IP 平均每分钟最多登录 5 次、连续最多 10 次，超过返回 429（第 14.1 节第 18 条）。
 - 身份透传：网关校验 JWT 后，先删掉客户端自带的 `X-User-Id`，再按 JWT 写入。实测客户端伪造 `X-User-Id: hacker`，下游收到的是 JWT 里的 `admin`。下游服务只认网关写入的身份头。
 - 路由级熔断和降级：每条路由加 `CircuitBreaker` 过滤器，下游超时或熔断时返回 503（格式见第 9.5 节）。网关这一层的 TimeLimiter 默认只给 1 秒：实测 2 秒才响应的下游，1086ms 就返回了降级。所以要按路由显式设置超时，并和网关 HTTP 客户端的响应超时保持一致。
 - traceId：网关生成 trace，通过 `traceparent` 传给下游（实测通过），同时写到响应头 `X-Trace-Id`，方便拿着 traceId 查日志。
@@ -452,6 +452,8 @@ Instabox 现在可用 4.9GiB，共存期间原应用继续运行也放得下，�
 14. **Canal 空闲等待补丁（2026-11-25）**：低负载下删缓存的 P50 是 56 ms，其中 Canal 这一段占 48 ms，在 0～100 ms 之间均匀分布。原因是 Canal 1.1.8 的 `CanalMQStarter` 拿到空批次后固定睡 100 ms，配置改不掉。补丁（`docker/canal/patch/`）把它改成默认 1 ms，`canal.mq.canalGetTimeout` 从 5 改为 1。先在临时的第二个 Canal 上比较了 5 组设置（`records/cachepulse-canal-tune-20261125/`）：每秒 700 次固定写入时，Canal 这一段 P50 从 40 ms 降到 7.3 ms，P99 从 119 ms 降到 46 ms；批大小 16 改 64 没有改善；空闲 CPU 从一个核的 0.8% 升到 2.5%。线上打补丁后，逐条写入、随机间隔的 80 次实测：删缓存 P50 从 55.7 ms 降到 13.4 ms，P99 从 109.4 ms 降到 29.4 ms（`records/cachepulse-latency-breakdown-20261125/`）。2026-11-26 在线上同一组里交替比较原版、睡 1 / 等 1、睡 1 / 等 5 各 2 轮：32 路写入打补丁的两种都不比原版少（960、819 和 1015、957 对 956、783 次每秒），32 路缓存失效 P50 从 102～109 ms 降到 42～54 ms；之前跨组看到的写入下降来自机器状态。线上保持睡 1 / 等 1（`docs/benchmarks.md` 第 9 节）。
 15. **Canal 镜像构建（2026-11-26）**：本地 Compose 通过 `docker/canal/Dockerfile` 编译并把补丁写入镜像，重建容器直接使用补丁版。MySQL 低内存配置随 Compose 放在 `docker/mysql/`。Instabox 上正在运行的是 11 月 25 日手工替换 JAR 的容器。将来换用构建产物时，沿用当前 Canal 配置目录和持久化位点。
 16. **高负载下的缓存失效长尾（2026-11-25～26）**：32 路持续写入加 3 路探针时，缓存失效 P50 约 24 ms，P99 到 570 ms。按段计时后，慢请求的时间主要花在演示用户服务等数据库连接上，SQL 本身很快；同一时段 MySQL 里有一批更新卡在提交阶段（`waiting for handler commit`，最长 589 ms），占着连接（`records/cachepulse-mysql-wait-20261125/`）。连接池从 10 加到 14 没有改善吞吐（两组 594/632 对 524/604 次每秒，`records/cachepulse-connection-hold-20261125/`）。归档和投递与业务写入共用一个 MySQL，于是给两者加了后台写入节奏（第 6.4 节，`BackgroundWritePacer`）：每批提交并确认 Kafka 位点后，在事务外按目标行数补足间隔。目标 650 行每秒时，两组 12 秒短测 P99 从 236 降到 125 ms、从 144 降到 80 ms（`records/cachepulse-background-pace-20261125/`）；75 秒持续压测吞吐从 629 升到 705 次每秒，P99 从 431 降到 181 ms，归档积压峰值 1223 → 1513 条、投递 394 → 901 条，停写后 3.7 秒追平，数据逐行核对一致（`records/cachepulse-background-pace-long-20261126/`）。线上仍按原节奏（参数为 0）。开启节奏后再测一轮，最慢的 2% 请求仍有约 370～420 ms 花在等连接，Canal 这一段约 20～30 ms，说明剩下的长尾在连接池排队（`records/cachepulse-canal-path-20261126/`）。
+17. **启动时先读到分组再消费（2026-11-26）**：消费线程在 `@PostConstruct` 里启动，注册表要等定时任务第一次运行才读。线上 11 月 25 日那次重启，19:08:01 已经分到分区、设好位点，19:08:02.8 才读到分组；中间拉到的变更找不到分组，会当成"没人管"确认掉，对应的缓存留着旧值到过期。现在 `CacheGroups.isLoaded()` 为 false 时 `processBatch` 不拉消息；`RegistryCacheGroups` 第一次读到注册表（哪怕是空的）才算读到，Redis 一直连不上就一直等，日志里每 2 秒有一条 `Cannot load cache group registry`。
+18. **登录接口限次数（2026-11-26）**：`/auth/token` 是网关自己的接口，不经过路由，路由上的 `RequestRateLimiter` 管不到它，可以一直猜密码，每次 BCrypt 校验还要占几十毫秒 CPU。`LoginRateLimitFilter` 按客户端 IP（同一个 `ipKeyResolver`）限次数：每秒补 1 个令牌、每次用 12 个、最多存 120 个，即平均每分钟 5 次、连续最多 10 次，超过返回 429（`code=LOGIN_RATE_LIMITED`，`Retry-After: 12`），不再校验密码。用单独的 `RedisRateLimiter` 实例和 key，不占路由的额度；Redis 出错时放行。
 
 ## 15. 与原项目的对比
 

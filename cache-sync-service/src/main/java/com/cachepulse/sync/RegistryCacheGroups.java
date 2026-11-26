@@ -64,6 +64,12 @@ public class RegistryCacheGroups implements CacheGroups {
         return loadedVersion;
     }
 
+    /** 第一次从注册表读到分组之前为 false，同步服务在这之前不消费（设计文档 14.1 第 17 条）。 */
+    @Override
+    public boolean isLoaded() {
+        return loadedVersion >= 0;
+    }
+
     @Override
     public AutoCacheConfig getConfig(String database, String table) {
         if (database == null) {

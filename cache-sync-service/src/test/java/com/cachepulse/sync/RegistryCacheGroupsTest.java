@@ -76,6 +76,21 @@ class RegistryCacheGroupsTest {
     }
 
     @Test
+    void notLoadedUntilTheRegistryHasBeenReadOnce() {
+        assertThat(groups.isLoaded()).isFalse();
+
+        when(registry.version()).thenThrow(new RedisConnectionFailureException("down"));
+        groups.refresh();
+        assertThat(groups.isLoaded()).as("a failed first read leaves it unloaded").isFalse();
+
+        reset(registry);
+        when(registry.version()).thenReturn(0L);
+        when(registry.loadAll()).thenReturn(Map.of());
+        groups.refresh();
+        assertThat(groups.isLoaded()).as("an empty registry still counts as read").isTrue();
+    }
+
+    @Test
     void registryFailureKeepsTheLastLoadedGroupsAndVersion() {
         when(registry.version()).thenReturn(1L);
         when(registry.loadAll()).thenReturn(Map.of("demo_db.users", MultiTableCacheTest.group("users", "user:#id", 1800)));

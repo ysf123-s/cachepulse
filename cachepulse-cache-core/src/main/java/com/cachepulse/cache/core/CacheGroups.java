@@ -28,6 +28,14 @@ public interface CacheGroups {
         return getConfig(tableName) != null;
     }
 
+    /**
+     * 分组配置是否已经读到。同步服务从 Redis 注册表读，第一次读到之前为 false：这时收到的变更找不到分组，
+     * 会被当成"没人管"确认掉，缓存留下旧值，所以同步服务要等它变成 true 才开始消费。接入方默认 true。
+     */
+    default boolean isLoaded() {
+        return true;
+    }
+
     /** 已注册分组的名字，可以直接传给 {@link #getConfig(String)}。 */
     Set<String> getAllTables();
 }

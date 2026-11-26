@@ -105,6 +105,30 @@ class CanalBatchRecoveryTest {
     }
 
     @Test
+    void waitsForCacheGroupsBeforePollingSoEarlyChangesAreNotAcknowledgedUnhandled() {
+        // 重启后消费线程比第一次读注册表早约 2 秒；这时拉到的变更找不到分组，确认掉就漏删缓存
+        config.setEnableVersionControl(false);
+        when(processor.isLoaded()).thenReturn(false);
+
+        assertThat(service.processBatch(consumer)).isFalse();
+
+        verify(consumer, never()).getRecordsWithoutAck();
+        verify(consumer, never()).getFlatMessagesWithoutAck();
+        verify(consumer, never()).ack();
+
+        when(processor.isLoaded()).thenReturn(true);
+        when(consumer.getRecordsWithoutAck()).thenReturn(List.of(
+                recordOf(rowEntry(CanalEntry.EventType.UPDATE, column("id", "1")))));
+        when(redis.delete("user:1")).thenReturn(true);
+
+        assertThat(service.processBatch(consumer)).isTrue();
+
+        var order = inOrder(redis, consumer);
+        order.verify(redis).delete("user:1");
+        order.verify(consumer).ack();
+    }
+
+    @Test
     void malformedEntryIsDeadLetteredWhileOtherEntriesAreProcessed() {
         config.setEnableVersionControl(false);
         when(consumer.getRecordsWithoutAck()).thenReturn(List.of(

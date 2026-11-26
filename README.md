@@ -90,4 +90,4 @@ JWT 密钥、内部令牌、Nacos 密钥都用随机值：
 [Convert]::ToBase64String([Security.Cryptography.RandomNumberGenerator]::GetBytes(48))
 ```
 
-接口调用：`POST /auth/token`（`{"username":"admin","password":"..."}`）换取 30 分钟有效的令牌，之后请求带 `X-CachePulse-Token: <令牌>`（或 `Authorization: Bearer <令牌>`）。`/api/**` 的 GET 和用户、部门的按 ID 批量查询都公开，管理页面打开时不用登录；其余写操作都要令牌。所有接口按客户端 IP 限流（超过返回 429）。
+接口调用：`POST /auth/token`（`{"username":"admin","password":"..."}`）换取 30 分钟有效的令牌，之后请求带 `X-CachePulse-Token: <令牌>`（或 `Authorization: Bearer <令牌>`）。`/api/**` 的 GET 和用户、部门的按 ID 批量查询都公开，管理页面打开时不用登录；其余写操作都要令牌。所有接口按客户端 IP 限流（超过返回 429）；登录另有更严的限制，同一个 IP 平均每分钟 5 次、连续最多 10 次。

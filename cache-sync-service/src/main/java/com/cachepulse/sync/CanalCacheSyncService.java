@@ -336,9 +336,14 @@ public class CanalCacheSyncService {
     /**
      * 只有解析和处理全部成功才确认本批；被正常过滤的消息也需要确认。
      * 无法处理的消息在确认前写入死信，整批回滚时不会写入，避免重试产生重复死信。
-     * 返回 false 表示没有拉到 Kafka 消息。
+     * 返回 false 表示没有拉到 Kafka 消息，或者分组配置还没读到、这次没有拉。
      */
     boolean processBatch(CanalConnectorWrapper.PartitionConsumer consumer) {
+        // 分组配置读到之前不拉消息：这时的变更找不到分组，会被当成"没人管"确认掉，缓存留下旧值。
+        // 消费线程在 @PostConstruct 里启动，注册表要等定时任务第一次运行才读，重启后中间约差 2 秒（设计文档 14.1 第 17 条）。
+        if (!cacheAnnotationProcessor.isLoaded()) {
+            return false;
+        }
         List<BinlogEvent> events = new ArrayList<>();
         List<DeadLetter> deadLetters = new ArrayList<>();
         List<BinlogEvent> heartbeats = new ArrayList<>();
