@@ -38,7 +38,7 @@ const overview = {generatedAt: now, services: [
 ]};
 const responses = {
   '/api/system/overview': overview,
-  '/api/sync/status': {serviceStarted: true, activeConsumers: 6, configuredConsumers: 6, lastSuccessAt: now, lastError: null},
+  '/api/sync/status': {serviceStarted: true, activeConsumers: 6, configuredConsumers: 6, lastSuccessAt: Date.now() / 1000 - 5, lastError: null},
   '/api/cache/freshness': {state: 'FRESH'},
   '/api/platform/consumers/status': {archive: {activeConsumer: true, lastSuccessAt: now, acknowledgedNewRows: 10,
     acknowledgedRejectedEvents: 2, lastError: {message: '<b>boom</b>', occurredAt: now}}},
@@ -68,6 +68,7 @@ vm.runInContext(fs.readFileSync('src/main/resources/static/dashboard-ui.js', 'ut
 
   const consumers = element('consumerGrid').innerHTML;
   assert.ok(consumers.includes('cachepulse-cache-sync') && consumers.includes('6 / 6') && consumers.includes('正常'));
+  assert.ok(consumers.includes('5 秒前'), 'epoch-second timestamps from the services read as seconds');
   assert.ok(consumers.includes('跳过的坏事件') && consumers.includes('<dd>2</dd>'));
   assert.ok(consumers.includes('&lt;b&gt;boom&lt;/b&gt;') && !consumers.includes('<b>boom</b>'));
   assert.ok(consumers.includes('读不到') && consumers.includes('HTTP 503'));

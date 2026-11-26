@@ -203,8 +203,10 @@ async function getJson(path) {
 }
 
 function ago(value) {
-  if (!value) return '暂无记录';
-  const seconds = Math.max(0, Math.round((Date.now() - new Date(value).getTime()) / 1000));
+  if (value == null) return '暂无记录';
+  // 各服务的时间可能是秒数（Jackson 默认把 Instant 写成数字），也可能是 ISO 字符串
+  const millis = typeof value === 'number' ? value * 1000 : new Date(value).getTime();
+  const seconds = Math.max(0, Math.round((Date.now() - millis) / 1000));
   if (seconds < 60) return `${seconds} 秒前`;
   if (seconds < 3600) return `${Math.floor(seconds / 60)} 分钟前`;
   return UI.date(value);
