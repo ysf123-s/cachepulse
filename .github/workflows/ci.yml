@@ -9,6 +9,17 @@ jobs:
   test:
     runs-on: ubuntu-latest
     timeout-minutes: 20
+    # 和 Instabox 上的版本一致（6.2）。cache-sync-service 的 22 项 Redis 测试只用 DB 15。
+    services:
+      redis:
+        image: redis:6.2
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 2s
+          --health-timeout 3s
+          --health-retries 20
     steps:
       - uses: actions/checkout@v4
 
@@ -22,9 +33,31 @@ jobs:
         with:
           node-version: "22"
 
-      # GitHub runner 自带 Docker，Testcontainers 测试会真正执行而不是被跳过
+      # GitHub runner 自带 Docker，Testcontainers 测试会真正执行而不是被跳过；Redis 测试连上面的 redis 服务
       - name: Verify
-        run: mvn -B verify
+        run: mvn -B verify -Dcache.test.redis.host=localhost
+
+      # 需要外部依赖的测试类一项都不许跳过，否则这一步失败
+      - name: External-dependency tests ran
+        run: |
+          python3 - <<'PY'
+          import glob, sys
+          import xml.etree.ElementTree as ET
+          classes = ['CacheBrowseRedisTest', 'CacheFillRedisTest', 'CacheIndexRedisTest', 'HeartbeatChainRedisTest',
+                     'CanalCacheIntegrationTest', 'RecoveryMysqlTest']
+          bad = []
+          for name in classes:
+              files = glob.glob(f'**/target/surefire-reports/TEST-*.{name}.xml', recursive=True)
+              if not files:
+                  bad.append(f'{name}: no report')
+                  continue
+              suite = ET.parse(files[0]).getroot()
+              tests, skipped = int(suite.get('tests')), int(suite.get('skipped'))
+              print(f'{name}: tests={tests} skipped={skipped}')
+              if tests == 0 or skipped:
+                  bad.append(f'{name}: {skipped} of {tests} skipped')
+          sys.exit('\n'.join(bad) if bad else 0)
+          PY
 
       # 网关托管的两个管理页面
       - name: Dashboard scripts
