@@ -354,11 +354,11 @@ public class CdcHeartbeatMonitor implements CacheFreshness {
         return State.FRESH;
     }
 
-    /** 启动后尚未确认链路、或链路中断/积压时不用缓存；写心跳失败（数据库故障）时继续用缓存。 */
+    /** 启动后尚未确认链路、链路中断或积压、写心跳失败时都不用缓存，直接读库；关闭心跳（DISABLED）时照常用缓存。 */
     @Override
     public boolean cacheUsable() {
         State state = state();
-        return state != State.STALE && state != State.STARTING;
+        return state == State.FRESH || state == State.DISABLED;
     }
 
     public Status status() {
@@ -401,7 +401,7 @@ public class CdcHeartbeatMonitor implements CacheFreshness {
             log.warn("CDC heartbeat stale (> {} ms): queries bypass Redis and read MySQL until heartbeats catch up; "
                     + "ages={}, partitions without heartbeat={}", staleAfterMs, status().partitionAgeMs(), uncoveredPartitions());
         } else if (state == State.WRITE_FAILING) {
-            log.warn("CDC heartbeat writes failing, cache stays in use: {}", lastWriteError);
+            log.warn("CDC heartbeat writes failing: queries bypass Redis until heartbeats recover ({})", lastWriteError);
         } else {
             log.info("CDC heartbeat {}: ages={}", state, status().partitionAgeMs());
         }

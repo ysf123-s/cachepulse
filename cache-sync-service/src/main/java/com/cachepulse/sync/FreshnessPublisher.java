@@ -1,6 +1,7 @@
 package com.cachepulse.sync;
 
 import com.cachepulse.cache.core.FreshnessSignal;
+import com.cachepulse.sync.CdcHeartbeatMonitor.State;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
@@ -38,9 +39,10 @@ public class FreshnessPublisher {
 
     @Scheduled(fixedDelayString = "${cachepulse.freshness.publish-ms:200}")
     public void publish() {
-        String state = heartbeat.cacheUsable() ? "FRESH" : heartbeat.state().name();
+        State state = heartbeat.state();
+        String signalState = state == State.DISABLED ? State.FRESH.name() : state.name();
         try {
-            new FreshnessSignal(state, groups.loadedVersion(), instance).write(redis, json, ttl);
+            new FreshnessSignal(signalState, groups.loadedVersion(), instance).write(redis, json, ttl);
         } catch (RuntimeException e) {
             log.debug("Cannot publish freshness signal: {}", e.toString());
         }

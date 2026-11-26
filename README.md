@@ -4,7 +4,9 @@
 
 ## 当前状态
 
-微服务拆分已完成（设计文档第 2～5 步）：435 项测试通过（需要外部 Redis、MySQL、Docker 的 38 项自动跳过），已部署在 Instabox 上，公网入口 [cdc.yusf.duckdns.org](https://cdc.yusf.duckdns.org/) 指向网关。原单体已删除。拆分设计和实测结果见 `docs/design/microservice-split.md`（第 14.1 节）。
+微服务拆分已完成并部署在 Instabox，公网入口 [cdc.yusf.duckdns.org](https://cdc.yusf.duckdns.org/) 指向网关。本机 437 项 Java 测试中 399 项通过，38 项因需要外部 Redis、MySQL 或 Docker 跳过。两套管理页面脚本测试通过。
+
+Instabox 已启用心跳写入失败时的查询降级和 Canal 空批 1 ms 补丁。归档与投递的后台写入节奏控制目前只用于压测，默认关闭。拆分设计和实测结果见 `docs/design/microservice-split.md` 第 14.1 节。
 
 ## 结构
 
@@ -41,7 +43,7 @@
 | `docker/mysql/init/` | 建库脚本：`05-cp-archive.sql`、`06-cp-delivery.sql`、`07-cp-grant.sql`（CachePulse），`01`～`04` 为原项目 |
 | `docs/` | 演示表、升级 SQL；`docs/design/` 为设计文档 |
 | `scripts/local/` | 本机一键启停 |
-| `scripts/` | 延迟、负载测量脚本 |
+| `scripts/` | 延迟、负载与投递隔离测量脚本 |
 | `Dockerfile` | 单个服务的镜像：`docker build --build-arg SERVICE=<服务名> .` |
 
 ## 构建与测试
@@ -54,9 +56,19 @@ node src/test/js/cache-dashboard.test.cjs
 node src/test/js/platform-dashboard.test.cjs
 ```
 
+## 投递隔离对照
+
+在隔离的演示环境运行，确保网关和 CachePulse 的 Redis 可访问。安装 Python 的 `requests`、`redis` 包，把网关管理员令牌放进 `CACHEPULSE_BENCH_TOKEN`，Redis 密码放进 `REDIS_PASSWORD`。Redis 地址和 DB 默认是 `127.0.0.1:6379`、DB 1，经本机 SSH 隧道时可用 `--redis-port 16379`。
+
+```powershell
+python scripts/measure-delivery-isolation.py --output records/delivery-isolation.json
+```
+
+脚本在演示 Webhook 正常和持续返回 HTTP 500 时对同一个临时部门各测 100 次。每次先确认部门旧值已在 Redis 中，再从提交部门更新前计时，直到观察到缓存键消失。报告保留原始样本、P50、P95、P99 和确认过的投递次数。脚本会删除临时部门、停用试验订阅并恢复 Webhook 的正常模式，归档和投递记录保留供核对。
+
 ## 本机运行
 
-1. 准备中间件：经 SSH 隧道访问 Instabox（见 `AGENTS.md`），或用 `docker-compose.yml` 起本地环境。
+1. 准备中间件。经 SSH 隧道访问 Instabox（见 `AGENTS.md`），或在仓库根目录运行 `docker compose up -d --build`。Compose 会为本地环境构建带空批 1 ms 补丁的 Canal 镜像。
 2. 在 MySQL 里执行 `docker/mysql/init/05-cp-archive.sql`、`06-cp-delivery.sql`、`07-cp-grant.sql`（只新建 `cp_archive`、`cp_delivery` 两个库，不改动业务库）。
 3. 复制 `cachepulse-local.env.example` 为 `cachepulse-local.env` 并填写（已被 `.gitignore` 忽略）。
 4. 启动：`pwsh scripts/local/start.ps1 -Build`；停止：`pwsh scripts/local/stop.ps1`。设置了 `NACOS_HOME` 时脚本会先启动 Nacos 3.0.3（端口 18848，控制台 18850），然后发布 `config/nacos/` 下的配置。

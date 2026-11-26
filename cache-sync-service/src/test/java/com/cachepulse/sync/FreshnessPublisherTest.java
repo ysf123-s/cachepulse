@@ -25,18 +25,16 @@ class FreshnessPublisherTest {
     private final CdcHeartbeatMonitor heartbeat = mock(CdcHeartbeatMonitor.class);
     private final ObjectMapper json = new ObjectMapper();
 
-    /** 缓存可用时写 FRESH（写心跳失败时也是），否则写心跳状态；版本号是已加载的注册表版本。 */
     @ParameterizedTest
-    @CsvSource({"true,FRESH,FRESH", "true,WRITE_FAILING,FRESH", "true,DISABLED,FRESH",
-            "false,STALE,STALE", "false,STARTING,STARTING"})
-    void writesStateAndLoadedRegistryVersion(boolean usable, State state, String expected) throws Exception {
+    @CsvSource({"FRESH,FRESH", "WRITE_FAILING,WRITE_FAILING", "DISABLED,FRESH",
+            "STALE,STALE", "STARTING,STARTING"})
+    void writesStateAndLoadedRegistryVersion(State state, String expected) throws Exception {
         GroupRegistry registry = mock(GroupRegistry.class);
         when(registry.version()).thenReturn(7L);
         when(registry.loadAll()).thenReturn(Map.of());
         RegistryCacheGroups groups = new RegistryCacheGroups(registry);
         groups.refresh();
         when(redis.opsForValue()).thenReturn(values);
-        when(heartbeat.cacheUsable()).thenReturn(usable);
         when(heartbeat.state()).thenReturn(state);
 
         new FreshnessPublisher(redis, json, heartbeat, groups, "cache-sync-service:18091", 3_000).publish();
@@ -45,16 +43,15 @@ class FreshnessPublisherTest {
         verify(values).set(eq(CacheKeys.FRESHNESS), written.capture(), eq(Duration.ofMillis(3_000)));
         FreshnessSignal signal = json.readValue(written.getValue(), FreshnessSignal.class);
         assertThat(signal).isEqualTo(new FreshnessSignal(expected, 7, "cache-sync-service:18091"));
-        assertThat(signal.fresh()).isEqualTo(usable);
+        assertThat(signal.fresh()).isEqualTo(state == State.FRESH || state == State.DISABLED);
     }
 
     @ParameterizedTest
-    @CsvSource({"true", "false"})
-    void registryNotLoadedYetIsReportedAsMinusOne(boolean usable) throws Exception {
+    @CsvSource({"FRESH", "STALE"})
+    void registryNotLoadedYetIsReportedAsMinusOne(State state) throws Exception {
         RegistryCacheGroups groups = new RegistryCacheGroups(mock(GroupRegistry.class));
         when(redis.opsForValue()).thenReturn(values);
-        when(heartbeat.cacheUsable()).thenReturn(usable);
-        when(heartbeat.state()).thenReturn(State.STALE);
+        when(heartbeat.state()).thenReturn(state);
 
         new FreshnessPublisher(redis, json, heartbeat, groups, "i", 3_000).publish();
 

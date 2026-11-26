@@ -18,7 +18,7 @@ services:
     volumes:
       - mysql-data:/var/lib/mysql
       - ./docker/mysql/my.cnf:/etc/mysql/conf.d/canal.cnf:ro
-      - ./deploy/mysql-small-memory.cnf:/etc/mysql/conf.d/cdc-memory.cnf:ro
+      - ./docker/mysql/mysql-small-memory.cnf:/etc/mysql/conf.d/cdc-memory.cnf:ro
       - ./docker/mysql/init:/docker-entrypoint-initdb.d:ro
     healthcheck:
       test: ["CMD", "mysqladmin", "ping", "-h", "127.0.0.1", "-uroot", "-p${MYSQL_ROOT_PASSWORD:-root}"]
@@ -96,7 +96,7 @@ services:
     restart: "no"
 
   canal:
-    image: canal/canal-server:v1.1.8
+    build: ./docker/canal
     container_name: canal-demo-canal
     restart: unless-stopped
     mem_limit: 512m

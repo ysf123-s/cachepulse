@@ -78,7 +78,7 @@
   const $ = id => document.getElementById(id);
   const routes = {users:'/users',departments:'/departments'};
   const number = value => Number(value).toLocaleString('zh-CN');
-  const FRESHNESS = {FRESH:'正常',STALE:'已降级：直接读库',STARTING:'确认中：直接读库',WRITE_FAILING:'心跳写入失败：继续用缓存',DISABLED:'未启用'};
+  const FRESHNESS = {FRESH:'正常',STALE:'已降级：直接读库',STARTING:'确认中：直接读库',WRITE_FAILING:'心跳写入失败：直接读库',DISABLED:'未启用'};
   const date = value => value ? new Date(typeof value==='number'?value*1000:value).toLocaleString('zh-CN') : '暂无';
   const epochMs = value => new Date(value).toLocaleString('zh-CN');
   let overviewFailed=false;
@@ -110,7 +110,11 @@
     const fresh=await api('/cache/freshness');
     $('freshness').textContent=FRESHNESS[fresh.state]??fresh.state;
     const ages=Object.values(fresh.partitionAgeMs||{});
-    $('freshnessDetail').textContent=fresh.state==='DISABLED'?'未启用心跳，查询始终使用缓存':ages.length?`最慢分区 ${number(Math.max(...ages))} ms，覆盖 ${ages.length} 个分区`:fresh.lastWriteError?`写入失败：${fresh.lastWriteError}`:'尚未收到心跳';
+    if(fresh.state==='WRITE_FAILING'){
+      $('freshnessDetail').textContent=fresh.lastWriteError?`写入失败：${fresh.lastWriteError}`:'近期没有成功写入心跳';
+    }else{
+      $('freshnessDetail').textContent=fresh.state==='DISABLED'?'心跳监控已关闭':ages.length?`最慢分区 ${number(Math.max(...ages))} ms，覆盖 ${ages.length} 个分区`:'尚未收到心跳';
+    }
     const loss=fresh.lastLoss;
     $('loss').textContent=fresh.lossDetection==='ON'?(fresh.lossEvents?`发现 ${number(fresh.lossEvents)} 次`:'未发现'):fresh.lossDetection==='UNAVAILABLE'?'无法检测':'未启用';
     $('lossDetail').textContent=loss?`最近：分区 ${loss.partitions.join('、')} 在 ${epochMs(loss.fromMs)} 至 ${epochMs(loss.toMs)} 的变更可能没删缓存`:fresh.lossDetection==='UNAVAILABLE'?'binlog 行镜像缺少心跳旧值':'心跳跳号说明有变更没被处理';

@@ -2,6 +2,7 @@ package com.cachepulse.archive;
 
 import com.cachepulse.common.model.ConsumerError;
 
+import com.cachepulse.common.kafka.BackgroundWritePacer;
 import com.cachepulse.common.kafka.CanalConnectorWrapper;
 import com.cachepulse.common.model.KafkaCanalRecord;
 
@@ -19,6 +20,7 @@ public class ArchiveConsumer implements AutoCloseable {
     private final CanalConnectorWrapper connector;
     private final ArchiveService archive;
     private final String groupId;
+    private final BackgroundWritePacer pacer = new BackgroundWritePacer();
     private final AtomicLong inserted = new AtomicLong();
     private final AtomicLong duplicates = new AtomicLong();
     private final Map<String, String> acknowledgedOffsets = new ConcurrentHashMap<>();
@@ -45,7 +47,11 @@ public class ArchiveConsumer implements AutoCloseable {
             active = true;
             while (running && !Thread.currentThread().isInterrupted()) {
                 try {
-                    if (!processBatch(consumer)) { Thread.sleep(10); }
+                    long started = System.nanoTime();
+                    long before = inserted.get();
+                    if (processBatch(consumer)) {
+                        pacer.awaitAfterBatch(inserted.get() - before, started);
+                    } else { Thread.sleep(10); }
                 } catch (InterruptedException | InterruptException e) {
                     Thread.currentThread().interrupt();
                     break;

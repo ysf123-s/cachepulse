@@ -1,6 +1,7 @@
 package com.cachepulse.delivery;
 
 import com.cachepulse.common.event.EventIdentity;
+import com.cachepulse.common.kafka.BackgroundWritePacer;
 import com.cachepulse.common.kafka.CanalConnectorWrapper;
 import com.cachepulse.common.model.BinlogEvent;
 import com.cachepulse.common.model.ConsumerError;
@@ -31,6 +32,7 @@ public class DeliveryConsumer implements AutoCloseable {
     private final PlatformProperties properties;
     private final TableCatalog tables;
     private final DeliveryStore store;
+    private final BackgroundWritePacer pacer = new BackgroundWritePacer();
     private final AtomicLong newEvents = new AtomicLong();
     private final AtomicLong duplicates = new AtomicLong();
     private final AtomicLong tasksCreated = new AtomicLong();
@@ -61,7 +63,11 @@ public class DeliveryConsumer implements AutoCloseable {
             active = true;
             while (running && !Thread.currentThread().isInterrupted()) {
                 try {
-                    if (!processBatch(consumer)) { Thread.sleep(10); }
+                    long started = System.nanoTime();
+                    long before = newEvents.get();
+                    if (processBatch(consumer)) {
+                        pacer.awaitAfterBatch(newEvents.get() - before, started);
+                    } else { Thread.sleep(10); }
                 } catch (InterruptedException | InterruptException e) {
                     Thread.currentThread().interrupt();
                     break;
@@ -97,6 +103,7 @@ public class DeliveryConsumer implements AutoCloseable {
     /** 和归档服务相同的事件 ID、源事件键算法，同一条 binlog 在两个服务里得到同一个 eventId。 */
     public Result handle(List<KafkaCanalRecord> records) {
         return store.transaction().execute(status -> {
+            Map<String, List<EventSubscription>> subscriptionsByTable = new HashMap<>();
             int created = 0, duplicate = 0, tasks = 0, ddl = 0;
             for (KafkaCanalRecord record : records) {
                 if (record.message() == null || record.message().isRaw()) {
@@ -121,17 +128,19 @@ public class DeliveryConsumer implements AutoCloseable {
                     String sourceEventKey = EventIdentity.sourceEventKey(sourceRowKey, occurrence);
                     if (!store.claimSourceEvent(sourceEventKey, eventId)) { duplicate++; continue; }
                     created++;
-                    tasks += createTasks(eventId, event, schema);
+                    List<EventSubscription> subscriptions = subscriptionsByTable.computeIfAbsent(schema.table(),
+                            table -> store.findEnabledSubscriptions(properties.getSourceId(), schema.database(), table));
+                    tasks += createTasks(eventId, event, subscriptions);
                 }
             }
             return new Result(created, duplicate, tasks, ddl);
         });
     }
 
-    private int createTasks(String eventId, BinlogEvent event, TableSchema schema) {
+    private int createTasks(String eventId, BinlogEvent event, List<EventSubscription> subscriptions) {
         int created = 0;
         String payload = null;
-        for (EventSubscription sub : store.findEnabledSubscriptions(properties.getSourceId(), schema.database(), schema.table())) {
+        for (EventSubscription sub : subscriptions) {
             if (!SubscriptionMatcher.matches(event, sub)) { continue; }
             PlatformProperties.TargetConfig target = properties.getTargets().get(sub.targetName());
             if (target == null) {

@@ -2,6 +2,7 @@ package com.cachepulse.delivery;
 
 import com.cachepulse.common.kafka.CanalConnectorWrapper;
 import com.cachepulse.common.model.KafkaCanalRecord;
+import com.cachepulse.common.parser.BinlogParser;
 
 import com.alibaba.otter.canal.protocol.CanalEntry;
 import org.junit.jupiter.api.BeforeEach;
@@ -79,6 +80,34 @@ class DeliveryConsumerTest {
         assertThat(result.newEvents()).isEqualTo(1);
         assertThat(result.tasks()).isZero();
         assertThat(f.sourceEventCount()).isEqualTo(1);
+    }
+
+    @Test
+    void looksUpSubscriptionsOncePerTableAndPollIncludingEmptyResults() {
+        DeliveryStore store = spy(f.store);
+        DeliveryConsumer consumer = new DeliveryConsumer(mock(CanalConnectorWrapper.class), new BinlogParser(),
+                f.properties, f.tables, store);
+        String source = f.properties.getSourceId();
+        String database = f.properties.getDatabase();
+        KafkaCanalRecord first = f.record(10, f.rows(CanalEntry.EventType.INSERT, inserted("1", "first")));
+        KafkaCanalRecord second = f.record(11, f.rows(CanalEntry.EventType.INSERT, inserted("2", "second")));
+
+        DeliveryConsumer.Result unsubscribed = consumer.handle(List.of(first, second));
+
+        assertThat(unsubscribed.newEvents()).isEqualTo(2);
+        assertThat(unsubscribed.tasks()).isZero();
+        verify(store).findEnabledSubscriptions(source, database, "inventory");
+
+        f.subscribe("new-sub", "first", "INSERT", true);
+        KafkaCanalRecord third = f.record(12, f.rows(CanalEntry.EventType.INSERT, inserted("3", "third")));
+        KafkaCanalRecord fourth = f.record(13, f.rows(CanalEntry.EventType.INSERT, inserted("4", "fourth")));
+
+        DeliveryConsumer.Result subscribed = consumer.handle(List.of(second, third, fourth));
+
+        assertThat(subscribed.duplicates()).isEqualTo(1);
+        assertThat(subscribed.tasks()).isEqualTo(2);
+        assertThat(f.sourceEventCount()).isEqualTo(4);
+        verify(store, times(2)).findEnabledSubscriptions(source, database, "inventory");
     }
 
     @Test

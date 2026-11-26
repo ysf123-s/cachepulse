@@ -89,12 +89,13 @@ class CdcHeartbeatMonitorTest {
     }
 
     @Test
-    void failingOrStalledWritesMeanTheDatabaseIsDownSoTheCacheStaysInUse() {
+    void failingOrStalledWritesBypassCacheUntilHeartbeatsRecover() {
         when(jdbc.update(startsWith("UPDATE cdc_heartbeat"), any(Object[].class)))
                 .thenThrow(new DataAccessResourceFailureException("MySQL unavailable"));
         monitor.beat();
         assertThat(monitor.state()).isEqualTo(State.WRITE_FAILING);
-        assertThat(monitor.cacheUsable()).isTrue();
+        assertThat(monitor.cacheUsable()).isFalse();
+        assertThat(monitor.status().cacheBypassed()).isTrue();
         assertThat(monitor.status().lastWriteError()).contains("MySQL unavailable");
 
         reset(jdbc);
@@ -105,6 +106,15 @@ class CdcHeartbeatMonitorTest {
 
         now.addAndGet(3_500);
         assertThat(monitor.state()).isEqualTo(State.WRITE_FAILING);
+        assertThat(monitor.cacheUsable()).isFalse();
+
+        monitor.beat();
+        monitor.recordProcessed(List.of(heartbeat(0, now.get())));
+        assertThat(monitor.state()).isEqualTo(State.STALE);
+        assertThat(monitor.cacheUsable()).isFalse();
+
+        monitor.recordProcessed(List.of(heartbeat(1, now.get())));
+        assertThat(monitor.state()).isEqualTo(State.FRESH);
         assertThat(monitor.cacheUsable()).isTrue();
     }
 

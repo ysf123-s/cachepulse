@@ -1,10 +1,13 @@
 package com.cachepulse.demo.user.controller;
 
 import com.cachepulse.cache.starter.BatchQueryResult;
+import com.cachepulse.demo.user.diagnostics.DepartmentWriteTiming;
 import com.cachepulse.demo.user.dto.DepartmentWriteRequest;
 import com.cachepulse.demo.user.dto.IdBatchRequest;
 import com.cachepulse.demo.user.entity.Department;
 import com.cachepulse.demo.user.service.DepartmentService;
+import jakarta.servlet.http.HttpServletResponse;
+import org.springframework.beans.factory.ObjectProvider;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -14,6 +17,7 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
@@ -26,9 +30,11 @@ import java.util.Map;
 @RequestMapping("/departments")
 public class DepartmentController {
     private final DepartmentService service;
+    private final DepartmentWriteTiming writeTiming;
 
-    public DepartmentController(DepartmentService service) {
+    public DepartmentController(DepartmentService service, ObjectProvider<DepartmentWriteTiming> writeTiming) {
         this.service = service;
+        this.writeTiming = writeTiming.getIfAvailable();
     }
 
     @GetMapping("/{id}")
@@ -55,17 +61,19 @@ public class DepartmentController {
 
     @PutMapping("/{id}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
-    public void update(@PathVariable Long id, @RequestBody DepartmentWriteRequest request) {
+    public void update(@PathVariable Long id, @RequestBody DepartmentWriteRequest request,
+                       @RequestHeader(name = "X-CachePulse-Write-Timing", required = false) String timingMode,
+                       HttpServletResponse response) {
         validate(request);
-        long startNs = System.nanoTime();
-        long startEpochMs = System.currentTimeMillis();
-
-        long[] sqlDuration = new long[1];
-        boolean updated = service.update(id, request, sqlDuration);
-
-        long endNs = System.nanoTime();
-        long endEpochMs = System.currentTimeMillis();
-
+        boolean updated;
+        if (writeTiming != null && ("auto".equals(timingMode) || "explicit".equals(timingMode))) {
+            DepartmentWriteTiming.Result result = writeTiming.measure("explicit".equals(timingMode),
+                    () -> service.update(id, request));
+            response.setHeader("Server-Timing", result.header());
+            updated = result.updated();
+        } else {
+            updated = service.update(id, request);
+        }
         if (!updated) {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Department not found");
         }

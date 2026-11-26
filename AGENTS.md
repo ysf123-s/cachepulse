@@ -19,6 +19,7 @@
 - 中间件只监听 Instabox 本机，经 SSH 隧道访问，例如 `-L 16379:127.0.0.1:6379 -L 9092:127.0.0.1:9092`。Kafka 对外通告 `localhost:9092`，本地端口必须也是 9092。
 - 阿里云 ECS（116.62.85.247）2026-11-24 从本机连不通：TCP 握手成功但收不到任何数据，原因未查明。
 - Instabox 上 Canal 的实例配置以容器环境变量为准：过滤规则 `canal.instance.filter.regex=demo_db\..*`、MySQL 地址等都由环境变量覆盖了配置文件（配置文件里还写着 `.*\\..*`），用 `docker inspect canal-server` 查看，只看配置文件会误判。
+- 本地 Compose 从 `docker/canal/Dockerfile` 构建带空批 1 ms 补丁的 Canal 镜像。Instabox 目前运行的是手工替换 JAR 的容器，`canal.mq.canalGetTimeout=1`。更换镜像时沿用服务器已有的配置目录与位点，回滚用服务器上的 `/data/cachepulse/canal-patch/rollback.sh`。
 - 开发期间不要在本机启用 CDC 心跳写入（设计文档第 6.5 节）；在服务器上执行会改动数据的操作前先征得用户同意。
 
 ## 用户偏好

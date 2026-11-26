@@ -38,19 +38,9 @@ public class DepartmentService {
     }
 
     public boolean update(Long id, DepartmentWriteRequest request) {
-        return update(id, request, null);
-    }
-
-    public boolean update(Long id, DepartmentWriteRequest request, long[] sqlDurationHolder) {
         UpdateWrapper<Department> update = new UpdateWrapper<>();
         update.eq("id", id).set("name", request.name()).set("code", request.code());
-        long sqlStartNs = System.nanoTime();
-        int rows = mapper.update(null, update);
-        long sqlEndNs = System.nanoTime();
-        if (sqlDurationHolder != null && sqlDurationHolder.length > 0) {
-            sqlDurationHolder[0] = sqlEndNs - sqlStartNs;
-        }
-        return rows > 0;
+        return mapper.update(null, update) > 0;
     }
 
     public boolean delete(Long id) {
