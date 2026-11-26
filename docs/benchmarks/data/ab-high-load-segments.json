@@ -1,0 +1,656 @@
+{
+  "scope": "32 writers and 3 closed-loop probes, six alternating rounds",
+  "resource_sample_interval_seconds": 2,
+  "rounds": [
+    {
+      "round": "1-monolith",
+      "throughput": 799.18,
+      "samples": 279,
+      "writer_put": {
+        "count": 16007,
+        "mean_ms": 39.969,
+        "p50_ms": 30.765,
+        "p95_ms": 103.355,
+        "p99_ms": 184.238,
+        "max_ms": 381.692
+      },
+      "cache": {
+        "count": 279,
+        "mean_ms": 133.161,
+        "p50_ms": 126.766,
+        "p95_ms": 241.646,
+        "p99_ms": 293.945,
+        "max_ms": 302.109
+      },
+      "arch_drain_s": 6.28,
+      "lag_peak": {
+        "cp-ab-091336-mono-cache": 62,
+        "cp-ab-091336-mono-archive": 4207
+      },
+      "probe_put": {
+        "mean": 30.227,
+        "p50": 18.484,
+        "p95": 101.907,
+        "p99": 156.71,
+        "max": 203.474
+      },
+      "put_to_kafka_create": {
+        "mean": 73.329,
+        "p50": 65.615,
+        "p95": 152.504,
+        "p99": 235.567,
+        "max": 275.306
+      },
+      "put_ack_to_kafka_create": {
+        "mean": 43.103,
+        "p50": 43.139,
+        "p95": 100.389,
+        "p99": 119.889,
+        "max": 200.784
+      },
+      "create_to_cache": {
+        "mean": 59.831,
+        "p50": 50.197,
+        "p95": 143.981,
+        "p99": 202.606,
+        "max": 248.84199999999998
+      },
+      "tail": [
+        {
+          "ms_from_window": 5901.7,
+          "cache": 293.945,
+          "put": 35.435,
+          "to_create": 125.514,
+          "after_create": 168.431,
+          "partition": 1,
+          "ts_type": 0
+        },
+        {
+          "ms_from_window": 916.8,
+          "cache": 294.125,
+          "put": 91.718,
+          "to_create": 109.377,
+          "after_create": 184.748,
+          "partition": 0,
+          "ts_type": 0
+        },
+        {
+          "ms_from_window": 5899,
+          "cache": 302.109,
+          "put": 42.471,
+          "to_create": 128.219,
+          "after_create": 173.89,
+          "partition": 1,
+          "ts_type": 0
+        }
+      ],
+      "host": {
+        "host_cpu_percent": 87.67,
+        "host_iowait_percent": 3.42,
+        "host_steal_percent": 1.39
+      },
+      "per_container_cpu_pct": {
+        "cp-ab-monolith-091336": 159.03,
+        "canal-server": 53.1,
+        "kafka": 13.21,
+        "mysql": 40.58,
+        "redis": 2.47,
+        "research-postgres": 0.51
+      },
+      "memory_min_mib": 3385.8,
+      "resource_sample_count": 10
+    },
+    {
+      "round": "2-cachepulse",
+      "throughput": 487.614,
+      "samples": 204,
+      "writer_put": {
+        "count": 9785,
+        "mean_ms": 65.458,
+        "p50_ms": 43.699,
+        "p95_ms": 163.783,
+        "p99_ms": 519.428,
+        "max_ms": 775.884
+      },
+      "cache": {
+        "count": 204,
+        "mean_ms": 141.692,
+        "p50_ms": 118.528,
+        "p95_ms": 318.971,
+        "p99_ms": 538.686,
+        "max_ms": 632.316
+      },
+      "arch_drain_s": 0.219,
+      "lag_peak": {
+        "cachepulse-cache-sync": 15,
+        "cachepulse-archive": 51
+      },
+      "probe_put": {
+        "mean": 75.901,
+        "p50": 45.007,
+        "p95": 220.303,
+        "p99": 489.392,
+        "max": 558.118
+      },
+      "put_to_kafka_create": {
+        "mean": 119.625,
+        "p50": 95.608,
+        "p95": 298.273,
+        "p99": 528.634,
+        "max": 590.108
+      },
+      "put_ack_to_kafka_create": {
+        "mean": 43.724,
+        "p50": 42.489,
+        "p95": 99.089,
+        "p99": 119.461,
+        "max": 135.136
+      },
+      "create_to_cache": {
+        "mean": 22.067,
+        "p50": 18.696,
+        "p95": 50.672,
+        "p99": 60.635,
+        "max": 74.11200000000001
+      },
+      "tail": [
+        {
+          "ms_from_window": 17464.1,
+          "cache": 538.686,
+          "put": 493.188,
+          "to_create": 528.634,
+          "after_create": 10.052,
+          "partition": 4,
+          "ts_type": 0
+        },
+        {
+          "ms_from_window": 17463,
+          "cache": 539.72,
+          "put": 489.392,
+          "to_create": 529.668,
+          "after_create": 10.052,
+          "partition": 0,
+          "ts_type": 0
+        },
+        {
+          "ms_from_window": 1080.6,
+          "cache": 632.316,
+          "put": 558.118,
+          "to_create": 590.108,
+          "after_create": 42.208,
+          "partition": 1,
+          "ts_type": 0
+        }
+      ],
+      "host": {
+        "host_cpu_percent": 81.94,
+        "host_iowait_percent": 8.26,
+        "host_steal_percent": 3.3
+      },
+      "per_container_cpu_pct": {
+        "cp-cache-sync-service": 30.11,
+        "cp-archive-service": 14.91,
+        "cp-delivery-service": 11.76,
+        "cp-demo-user-service": 105.7,
+        "canal-server": 39.65,
+        "kafka": 16.04,
+        "mysql": 39.84,
+        "redis": 3.17,
+        "research-postgres": 0.55
+      },
+      "memory_min_mib": 2227,
+      "resource_sample_count": 10
+    },
+    {
+      "round": "3-monolith",
+      "throughput": 979.609,
+      "samples": 307,
+      "writer_put": {
+        "count": 19629,
+        "mean_ms": 32.595,
+        "p50_ms": 28.023,
+        "p95_ms": 70.672,
+        "p99_ms": 103.038,
+        "max_ms": 202.691
+      },
+      "cache": {
+        "count": 307,
+        "mean_ms": 133.313,
+        "p50_ms": 125.298,
+        "p95_ms": 236.613,
+        "p99_ms": 314.288,
+        "max_ms": 399.72
+      },
+      "arch_drain_s": 2.824,
+      "lag_peak": {
+        "cp-ab-091336-mono-cache": 83,
+        "cp-ab-091336-mono-archive": 4435
+      },
+      "probe_put": {
+        "mean": 25.334,
+        "p50": 20.081,
+        "p95": 62.522,
+        "p99": 107.204,
+        "max": 148.598
+      },
+      "put_to_kafka_create": {
+        "mean": 65.42,
+        "p50": 59.472,
+        "p95": 136.02,
+        "p99": 167.749,
+        "max": 233.143
+      },
+      "put_ack_to_kafka_create": {
+        "mean": 40.087,
+        "p50": 35.589,
+        "p95": 97.479,
+        "p99": 129.931,
+        "max": 209.324
+      },
+      "create_to_cache": {
+        "mean": 67.893,
+        "p50": 57.871,
+        "p95": 159.127,
+        "p99": 247.583,
+        "max": 363.062
+      },
+      "tail": [
+        {
+          "ms_from_window": 16181.7,
+          "cache": 314.288,
+          "put": 7.101,
+          "to_create": 167.749,
+          "after_create": 146.539,
+          "partition": 0,
+          "ts_type": 0
+        },
+        {
+          "ms_from_window": 13116.1,
+          "cache": 376,
+          "put": 95.561,
+          "to_create": 103.275,
+          "after_create": 272.725,
+          "partition": 0,
+          "ts_type": 0
+        },
+        {
+          "ms_from_window": 12906.8,
+          "cache": 392.642,
+          "put": 11.851,
+          "to_create": 29.58,
+          "after_create": 363.062,
+          "partition": 1,
+          "ts_type": 0
+        },
+        {
+          "ms_from_window": 12882.8,
+          "cache": 399.72,
+          "put": 61.121,
+          "to_create": 37.595,
+          "after_create": 362.125,
+          "partition": 1,
+          "ts_type": 0
+        }
+      ],
+      "host": {
+        "host_cpu_percent": 93.21,
+        "host_iowait_percent": 0.17,
+        "host_steal_percent": 0.42
+      },
+      "per_container_cpu_pct": {
+        "cp-ab-monolith-091336": 163.85,
+        "canal-server": 62.92,
+        "kafka": 12.57,
+        "mysql": 45.84,
+        "redis": 2.43,
+        "research-postgres": 0.48
+      },
+      "memory_min_mib": 3443.6,
+      "resource_sample_count": 10
+    },
+    {
+      "round": "4-cachepulse",
+      "throughput": 754.675,
+      "samples": 254,
+      "writer_put": {
+        "count": 15177,
+        "mean_ms": 42.179,
+        "p50_ms": 29.658,
+        "p95_ms": 109.088,
+        "p99_ms": 342.257,
+        "max_ms": 461.523
+      },
+      "cache": {
+        "count": 254,
+        "mean_ms": 116.4,
+        "p50_ms": 109.05,
+        "p95_ms": 222.668,
+        "p99_ms": 433.355,
+        "max_ms": 469.399
+      },
+      "arch_drain_s": 0.649,
+      "lag_peak": {
+        "cachepulse-cache-sync": 7,
+        "cachepulse-archive": 56
+      },
+      "probe_put": {
+        "mean": 45.325,
+        "p50": 26.293,
+        "p95": 119.86,
+        "p99": 352.589,
+        "max": 385.347
+      },
+      "put_to_kafka_create": {
+        "mean": 96.796,
+        "p50": 87.24,
+        "p95": 191.677,
+        "p99": 422.46,
+        "max": 430.333
+      },
+      "put_ack_to_kafka_create": {
+        "mean": 51.471,
+        "p50": 51.623,
+        "p95": 109.633,
+        "p99": 136.418,
+        "max": 169.751
+      },
+      "create_to_cache": {
+        "mean": 19.604,
+        "p50": 14.95,
+        "p95": 53.221,
+        "p99": 86.721,
+        "max": 91.63699999999999
+      },
+      "tail": [
+        {
+          "ms_from_window": 16383.6,
+          "cache": 433.355,
+          "put": 319.564,
+          "to_create": 419.09,
+          "after_create": 14.265,
+          "partition": 0,
+          "ts_type": 0
+        },
+        {
+          "ms_from_window": 16367.5,
+          "cache": 442.937,
+          "put": 329.454,
+          "to_create": 429.198,
+          "after_create": 13.739,
+          "partition": 1,
+          "ts_type": 0
+        },
+        {
+          "ms_from_window": 5047.4,
+          "cache": 469.399,
+          "put": 363.919,
+          "to_create": 430.333,
+          "after_create": 39.066,
+          "partition": 1,
+          "ts_type": 0
+        }
+      ],
+      "host": {
+        "host_cpu_percent": 83.45,
+        "host_iowait_percent": 6.39,
+        "host_steal_percent": 0.25
+      },
+      "per_container_cpu_pct": {
+        "cp-cache-sync-service": 25.61,
+        "cp-archive-service": 15.32,
+        "cp-delivery-service": 12.07,
+        "cp-demo-user-service": 107.09,
+        "canal-server": 43.76,
+        "kafka": 13.63,
+        "mysql": 44.16,
+        "redis": 3.11,
+        "research-postgres": 0.48
+      },
+      "memory_min_mib": 2196.3,
+      "resource_sample_count": 10
+    },
+    {
+      "round": "5-monolith",
+      "throughput": 945.185,
+      "samples": 303,
+      "writer_put": {
+        "count": 19107,
+        "mean_ms": 33.75,
+        "p50_ms": 26.544,
+        "p95_ms": 68.206,
+        "p99_ms": 131.485,
+        "max_ms": 550.075
+      },
+      "cache": {
+        "count": 303,
+        "mean_ms": 131.1,
+        "p50_ms": 118.813,
+        "p95_ms": 246.377,
+        "p99_ms": 574.784,
+        "max_ms": 629.474
+      },
+      "arch_drain_s": 4.416,
+      "lag_peak": {
+        "cp-ab-091336-mono-cache": 93,
+        "cp-ab-091336-mono-archive": 4352
+      },
+      "probe_put": {
+        "mean": 31.106,
+        "p50": 16.655,
+        "p95": 96.891,
+        "p99": 495.88,
+        "max": 521.506
+      },
+      "put_to_kafka_create": {
+        "mean": 77.597,
+        "p50": 67.877,
+        "p95": 141.129,
+        "p99": 538.979,
+        "max": 569.855
+      },
+      "put_ack_to_kafka_create": {
+        "mean": 46.491,
+        "p50": 44.219,
+        "p95": 106.408,
+        "p99": 137.548,
+        "max": 209.92199999999997
+      },
+      "create_to_cache": {
+        "mean": 53.503,
+        "p50": 37.714,
+        "p95": 134.75,
+        "p99": 229.446,
+        "max": 274.34299999999996
+      },
+      "tail": [
+        {
+          "ms_from_window": 15279.7,
+          "cache": 574.784,
+          "put": 497.338,
+          "to_create": 538.979,
+          "after_create": 35.805,
+          "partition": 0,
+          "ts_type": 0
+        },
+        {
+          "ms_from_window": 15275.6,
+          "cache": 578.85,
+          "put": 500.485,
+          "to_create": 543.044,
+          "after_create": 35.806,
+          "partition": 1,
+          "ts_type": 0
+        },
+        {
+          "ms_from_window": 17938.8,
+          "cache": 586.917,
+          "put": 495.88,
+          "to_create": 569.855,
+          "after_create": 17.062,
+          "partition": 1,
+          "ts_type": 0
+        },
+        {
+          "ms_from_window": 15280,
+          "cache": 629.474,
+          "put": 521.506,
+          "to_create": 543.621,
+          "after_create": 85.853,
+          "partition": 5,
+          "ts_type": 0
+        }
+      ],
+      "host": {
+        "host_cpu_percent": 88.86,
+        "host_iowait_percent": 3.93,
+        "host_steal_percent": 0.4
+      },
+      "per_container_cpu_pct": {
+        "cp-ab-monolith-091336": 158.91,
+        "canal-server": 56.25,
+        "kafka": 11.16,
+        "mysql": 43.47,
+        "redis": 2.43,
+        "research-postgres": 0.5
+      },
+      "memory_min_mib": 3393.1,
+      "resource_sample_count": 10
+    },
+    {
+      "round": "6-cachepulse",
+      "throughput": 843.551,
+      "samples": 300,
+      "writer_put": {
+        "count": 16904,
+        "mean_ms": 37.867,
+        "p50_ms": 31.45,
+        "p95_ms": 86.543,
+        "p99_ms": 127.789,
+        "max_ms": 232.8
+      },
+      "cache": {
+        "count": 300,
+        "mean_ms": 102.33,
+        "p50_ms": 99.712,
+        "p95_ms": 170.936,
+        "p99_ms": 225.748,
+        "max_ms": 263.268
+      },
+      "arch_drain_s": 0.366,
+      "lag_peak": {
+        "cachepulse-cache-sync": 26,
+        "cachepulse-archive": 53
+      },
+      "probe_put": {
+        "mean": 33.437,
+        "p50": 24.745,
+        "p95": 93.23,
+        "p99": 134.552,
+        "max": 156.112
+      },
+      "put_to_kafka_create": {
+        "mean": 83.666,
+        "p50": 77.271,
+        "p95": 152.295,
+        "p99": 212.341,
+        "max": 248.604
+      },
+      "put_ack_to_kafka_create": {
+        "mean": 50.229,
+        "p50": 52.05,
+        "p95": 102.647,
+        "p99": 117.122,
+        "max": 137.715
+      },
+      "create_to_cache": {
+        "mean": 18.664,
+        "p50": 15.146,
+        "p95": 42.884,
+        "p99": 60.799,
+        "max": 72.864
+      },
+      "tail": [
+        {
+          "ms_from_window": 1370.5,
+          "cache": 225.748,
+          "put": 126.933,
+          "to_create": 212.341,
+          "after_create": 13.407,
+          "partition": 5,
+          "ts_type": 0
+        },
+        {
+          "ms_from_window": 1366.7,
+          "cache": 234.922,
+          "put": 134.552,
+          "to_create": 220.163,
+          "after_create": 14.759,
+          "partition": 0,
+          "ts_type": 0
+        },
+        {
+          "ms_from_window": 5617.8,
+          "cache": 250.867,
+          "put": 135.213,
+          "to_create": 236.014,
+          "after_create": 14.853,
+          "partition": 4,
+          "ts_type": 0
+        },
+        {
+          "ms_from_window": 6782.3,
+          "cache": 263.268,
+          "put": 155.942,
+          "to_create": 248.604,
+          "after_create": 14.664,
+          "partition": 4,
+          "ts_type": 0
+        }
+      ],
+      "host": {
+        "host_cpu_percent": 94.98,
+        "host_iowait_percent": 0.16,
+        "host_steal_percent": 0.22
+      },
+      "per_container_cpu_pct": {
+        "cp-cache-sync-service": 27.11,
+        "cp-archive-service": 15.93,
+        "cp-delivery-service": 14.05,
+        "cp-demo-user-service": 119.61,
+        "canal-server": 53.02,
+        "kafka": 14.56,
+        "mysql": 52.35,
+        "redis": 3.37,
+        "research-postgres": 0.46
+      },
+      "memory_min_mib": 2223.4,
+      "resource_sample_count": 10
+    }
+  ],
+  "mysql": {
+    "batch_innodb_flush_log_at_trx_commit": 1,
+    "sync_binlog": 1,
+    "slow_query_log": "OFF",
+    "historical_statement_and_wait_history": "OFF",
+    "delivery_rows": [
+      {
+        "round": "2-cachepulse",
+        "successful_writes": 9785,
+        "archived": 9785,
+        "source_event_rows": 9785
+      },
+      {
+        "round": "4-cachepulse",
+        "successful_writes": 15177,
+        "archived": 15177,
+        "source_event_rows": 15177
+      },
+      {
+        "round": "6-cachepulse",
+        "successful_writes": 16904,
+        "archived": 16904,
+        "source_event_rows": 16904
+      }
+    ]
+  }
+}

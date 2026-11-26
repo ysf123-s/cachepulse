@@ -1,0 +1,425 @@
+{
+  "started_epoch": 1795609018.339956,
+  "rounds": [
+    {
+      "started_epoch": 1795609030.8557117,
+      "seconds": 30,
+      "target": 800,
+      "concurrent_sessions": 10,
+      "achieved_updates_per_second": 800.0,
+      "update_and_autocommit": {
+        "count": 24000,
+        "p50_ms": 0.486,
+        "p95_ms": 0.765,
+        "p99_ms": 1.116,
+        "max_ms": 5.406,
+        "above_100_ms": 0,
+        "above_400_ms": 0
+      },
+      "slowest": [
+        {
+          "offset_seconds": 24.781,
+          "duration_ms": 5.406
+        },
+        {
+          "offset_seconds": 24.783,
+          "duration_ms": 4.611
+        },
+        {
+          "offset_seconds": 0.479,
+          "duration_ms": 4.199
+        },
+        {
+          "offset_seconds": 7.099,
+          "duration_ms": 4.17
+        },
+        {
+          "offset_seconds": 24.784,
+          "duration_ms": 3.492
+        },
+        {
+          "offset_seconds": 24.885,
+          "duration_ms": 3.478
+        },
+        {
+          "offset_seconds": 24.1,
+          "duration_ms": 3.398
+        },
+        {
+          "offset_seconds": 7.888,
+          "duration_ms": 3.38
+        },
+        {
+          "offset_seconds": 24.101,
+          "duration_ms": 3.304
+        },
+        {
+          "offset_seconds": 11.87,
+          "duration_ms": 3.278
+        }
+      ],
+      "host_disk_delta": {
+        "vda": [
+          410,
+          34,
+          0
+        ],
+        "vdb": [
+          160261,
+          11805,
+          5540
+        ]
+      },
+      "round": 1,
+      "device": "shared",
+      "mysql_config": "26.7.0\t1\t1\tO_DIRECT\t134217728\t104857600",
+      "mysql_delta": {
+        "Innodb_log_waits": [
+          0
+        ],
+        "wait/io/file/innodb/innodb_log_file": [
+          24406,
+          2149532962570,
+          48602,
+          171313917840
+        ],
+        "wait/io/file/sql/binlog": [
+          23993,
+          4322332651052,
+          24000,
+          158244175544
+        ],
+        "Innodb_row_lock_waits": [
+          0
+        ],
+        "Innodb_os_log_fsyncs": [
+          24372
+        ],
+        "wait/io/file/innodb/innodb_data_file": [
+          42,
+          92722604,
+          1440,
+          8245808428
+        ]
+      }
+    },
+    {
+      "started_epoch": 1795609073.5017736,
+      "seconds": 30,
+      "target": 800,
+      "concurrent_sessions": 10,
+      "achieved_updates_per_second": 800.0,
+      "update_and_autocommit": {
+        "count": 24000,
+        "p50_ms": 0.469,
+        "p95_ms": 0.714,
+        "p99_ms": 1.002,
+        "max_ms": 4.59,
+        "above_100_ms": 0,
+        "above_400_ms": 0
+      },
+      "slowest": [
+        {
+          "offset_seconds": 7.374,
+          "duration_ms": 4.59
+        },
+        {
+          "offset_seconds": 14.52,
+          "duration_ms": 4.457
+        },
+        {
+          "offset_seconds": 0.428,
+          "duration_ms": 4.08
+        },
+        {
+          "offset_seconds": 1.189,
+          "duration_ms": 4.074
+        },
+        {
+          "offset_seconds": 14.508,
+          "duration_ms": 4.023
+        },
+        {
+          "offset_seconds": 1.151,
+          "duration_ms": 4.021
+        },
+        {
+          "offset_seconds": 7.376,
+          "duration_ms": 3.997
+        },
+        {
+          "offset_seconds": 11.374,
+          "duration_ms": 3.661
+        },
+        {
+          "offset_seconds": 3.4,
+          "duration_ms": 3.613
+        },
+        {
+          "offset_seconds": 14.521,
+          "duration_ms": 3.432
+        }
+      ],
+      "host_disk_delta": {
+        "vda": [
+          156721,
+          10470,
+          4984
+        ],
+        "vdb": [
+          2711,
+          276,
+          44
+        ]
+      },
+      "round": 2,
+      "device": "separate",
+      "mysql_config": "26.7.0\t1\t1\tO_DIRECT\t134217728\t104857600",
+      "mysql_delta": {
+        "Innodb_log_waits": [
+          0
+        ],
+        "wait/io/file/innodb/innodb_log_file": [
+          24396,
+          2103095776830,
+          48616,
+          161924196096
+        ],
+        "wait/io/file/sql/binlog": [
+          23993,
+          4191093324236,
+          23998,
+          148236206092
+        ],
+        "Innodb_row_lock_waits": [
+          0
+        ],
+        "Innodb_os_log_fsyncs": [
+          24366
+        ],
+        "wait/io/file/innodb/innodb_data_file": [
+          49,
+          203329360,
+          1535,
+          10141729260
+        ]
+      }
+    },
+    {
+      "started_epoch": 1795609108.7540233,
+      "seconds": 30,
+      "target": 800,
+      "concurrent_sessions": 10,
+      "achieved_updates_per_second": 800.0,
+      "update_and_autocommit": {
+        "count": 24000,
+        "p50_ms": 0.509,
+        "p95_ms": 0.844,
+        "p99_ms": 1.298,
+        "max_ms": 3.878,
+        "above_100_ms": 0,
+        "above_400_ms": 0
+      },
+      "slowest": [
+        {
+          "offset_seconds": 5.95,
+          "duration_ms": 3.878
+        },
+        {
+          "offset_seconds": 9.548,
+          "duration_ms": 3.846
+        },
+        {
+          "offset_seconds": 29.808,
+          "duration_ms": 3.569
+        },
+        {
+          "offset_seconds": 1.125,
+          "duration_ms": 3.495
+        },
+        {
+          "offset_seconds": 19.298,
+          "duration_ms": 3.489
+        },
+        {
+          "offset_seconds": 4.993,
+          "duration_ms": 3.341
+        },
+        {
+          "offset_seconds": 3.398,
+          "duration_ms": 3.307
+        },
+        {
+          "offset_seconds": 10.129,
+          "duration_ms": 3.295
+        },
+        {
+          "offset_seconds": 5.97,
+          "duration_ms": 3.248
+        },
+        {
+          "offset_seconds": 5.951,
+          "duration_ms": 3.22
+        }
+      ],
+      "host_disk_delta": {
+        "vda": [
+          156099,
+          10660,
+          4748
+        ],
+        "vdb": [
+          2493,
+          247,
+          24
+        ]
+      },
+      "round": 3,
+      "device": "separate",
+      "mysql_config": "26.7.0\t1\t1\tO_DIRECT\t134217728\t104857600",
+      "mysql_delta": {
+        "Innodb_log_waits": [
+          0
+        ],
+        "wait/io/file/innodb/innodb_log_file": [
+          24414,
+          2255235180954,
+          48596,
+          179259810444
+        ],
+        "wait/io/file/sql/binlog": [
+          23992,
+          4495740710760,
+          23997,
+          166660967304
+        ],
+        "Innodb_row_lock_waits": [
+          0
+        ],
+        "Innodb_os_log_fsyncs": [
+          24371
+        ],
+        "wait/io/file/innodb/innodb_data_file": [
+          77,
+          123432764,
+          1639,
+          11680248060
+        ]
+      }
+    },
+    {
+      "started_epoch": 1795609146.3708549,
+      "seconds": 30,
+      "target": 800,
+      "concurrent_sessions": 10,
+      "achieved_updates_per_second": 800.0,
+      "update_and_autocommit": {
+        "count": 24000,
+        "p50_ms": 0.513,
+        "p95_ms": 0.856,
+        "p99_ms": 1.46,
+        "max_ms": 9.895,
+        "above_100_ms": 0,
+        "above_400_ms": 0
+      },
+      "slowest": [
+        {
+          "offset_seconds": 22.569,
+          "duration_ms": 9.895
+        },
+        {
+          "offset_seconds": 22.57,
+          "duration_ms": 8.564
+        },
+        {
+          "offset_seconds": 22.571,
+          "duration_ms": 8.562
+        },
+        {
+          "offset_seconds": 22.573,
+          "duration_ms": 7.424
+        },
+        {
+          "offset_seconds": 22.568,
+          "duration_ms": 7.005
+        },
+        {
+          "offset_seconds": 22.574,
+          "duration_ms": 6.576
+        },
+        {
+          "offset_seconds": 7.84,
+          "duration_ms": 5.836
+        },
+        {
+          "offset_seconds": 16.421,
+          "duration_ms": 5.489
+        },
+        {
+          "offset_seconds": 22.604,
+          "duration_ms": 5.392
+        },
+        {
+          "offset_seconds": 11.42,
+          "duration_ms": 4.999
+        }
+      ],
+      "host_disk_delta": {
+        "vda": [
+          341,
+          28,
+          0
+        ],
+        "vdb": [
+          160226,
+          12210,
+          4844
+        ]
+      },
+      "round": 4,
+      "device": "shared",
+      "mysql_config": "26.7.0\t1\t1\tO_DIRECT\t134217728\t104857600",
+      "mysql_delta": {
+        "Innodb_log_waits": [
+          0
+        ],
+        "wait/io/file/innodb/innodb_log_file": [
+          24398,
+          2330604991676,
+          48555,
+          176445766224
+        ],
+        "wait/io/file/sql/binlog": [
+          23978,
+          4595149900120,
+          23984,
+          167567448932
+        ],
+        "Innodb_row_lock_waits": [
+          0
+        ],
+        "Innodb_os_log_fsyncs": [
+          24356
+        ],
+        "wait/io/file/innodb/innodb_data_file": [
+          43,
+          76373960,
+          1601,
+          9949670328
+        ]
+      }
+    }
+  ],
+  "completed": true,
+  "mysql_image": "mysql@sha256:625f74ddf93652d9d0f8d4ea7d741b9189554a5e96d27bb770abd0902d89c6e3",
+  "postcheck": {
+    "scratch_container_removed": true,
+    "scratch_directories_removed": true,
+    "free_mib": {
+      "/data": 1728,
+      "/": 2760
+    },
+    "cleanup_errors": []
+  },
+  "finished_epoch": 1795609176.6737387
+}

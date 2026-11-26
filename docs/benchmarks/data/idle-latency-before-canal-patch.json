@@ -1,0 +1,14 @@
+{
+  "note": "trace_probe.py 80, run on Instabox 2026-11-25 ~18:00 CST, one update at a time with random 150-450 ms gaps, Canal 1.1.8 (canal.mq.canalGetTimeout=5, canalBatchSize=16)",
+  "updates": 80,
+  "matched": 80,
+  "segments_ms": {
+    "put": {"n": 80, "mean": 4.4, "p50": 4.1, "p95": 5.7, "p99": 7.3, "max": 7.4},
+    "canal": {"n": 80, "mean": 51.3, "p50": 48.4, "p95": 99.7, "p99": 103.6, "max": 104.0},
+    "kafka": {"n": 80, "mean": 1.9, "p50": 2, "p95": 3, "p99": 11, "max": 12},
+    "process": {"n": 80, "mean": 0.8, "p50": 1, "p95": 2, "p99": 3, "max": 4},
+    "total": {"n": 80, "mean": 58.4, "p50": 55.7, "p95": 106.7, "p99": 109.4, "max": 110.9}
+  },
+  "canal_histogram_10ms": [11, 8, 7, 5, 11, 4, 5, 8, 7, 11, 3, 0, 0],
+  "reading": "Canal segment is flat from 0 to 100 ms and never above 104 ms: CanalMQStarter.worker sleeps 100 ms whenever getWithoutAck returns empty (canal-1.1.8 server/CanalMQStarter.java). PUT, Kafka and Redis together are about 7 ms at P50."
+}

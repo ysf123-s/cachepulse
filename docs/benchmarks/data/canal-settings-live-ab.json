@@ -1,0 +1,344 @@
+{
+ "started_at": "2026-11-26T06:27:15.324591+00:00",
+ "order": [
+  "warmup:sleep1-get1",
+  "original",
+  "sleep1-get1",
+  "sleep1-get5",
+  "sleep1-get5",
+  "sleep1-get1",
+  "original"
+ ],
+ "rounds": [
+  {
+   "round": 0,
+   "setting": "warmup:sleep1-get1",
+   "patched_jar": true,
+   "canal_get_timeout": 1,
+   "closed3_tps": 48.73,
+   "closed3_cache_p50": 14.604,
+   "closed3_cache_p99": 31.833,
+   "w32_tps": 886.461,
+   "w32_cache_p50": 46.466,
+   "w32_cache_p99": 133.84,
+   "w32_put_p50": 32.48,
+   "w32_put_p99": 110.209,
+   "w32_host_cpu": 92.68,
+   "w32_peak_lag": {
+    "cachepulse-cache-sync": 11,
+    "cachepulse-archive": 5678
+   },
+   "idle_canal": {
+    "n": 80,
+    "mean": 1.0,
+    "p50": 0.8,
+    "p95": 3.0,
+    "p99": 5.4,
+    "max": 5.5
+   },
+   "idle_total": {
+    "n": 80,
+    "mean": 7.6,
+    "p50": 6.9,
+    "p95": 13.6,
+    "p99": 14.7,
+    "max": 16.7
+   },
+   "restarts": {
+    "cp-cache-sync-service": 0,
+    "cp-archive-service": 0,
+    "cp-delivery-service": 0,
+    "cp-demo-user-service": 0,
+    "canal-server": 0,
+    "kafka": 0,
+    "mysql": 0,
+    "redis": 0,
+    "research-postgres": 0
+   }
+  },
+  {
+   "round": 1,
+   "setting": "original",
+   "patched_jar": false,
+   "canal_get_timeout": 5,
+   "closed3_tps": 26.657,
+   "closed3_cache_p50": 102.582,
+   "closed3_cache_p99": 121.629,
+   "w32_tps": 955.533,
+   "w32_cache_p50": 101.732,
+   "w32_cache_p99": 276.663,
+   "w32_put_p50": 27.791,
+   "w32_put_p99": 124.237,
+   "w32_host_cpu": 87.88,
+   "w32_peak_lag": {
+    "cachepulse-cache-sync": 6,
+    "cachepulse-archive": 467
+   },
+   "idle_canal": {
+    "n": 80,
+    "mean": 52.9,
+    "p50": 53.3,
+    "p95": 94.1,
+    "p99": 104.5,
+    "max": 104.8
+   },
+   "idle_total": {
+    "n": 80,
+    "mean": 58.5,
+    "p50": 59.1,
+    "p95": 99.5,
+    "p99": 109.3,
+    "max": 109.7
+   },
+   "restarts": {
+    "cp-cache-sync-service": 0,
+    "cp-archive-service": 0,
+    "cp-delivery-service": 0,
+    "cp-demo-user-service": 0,
+    "canal-server": 0,
+    "kafka": 0,
+    "mysql": 0,
+    "redis": 0,
+    "research-postgres": 0
+   }
+  },
+  {
+   "round": 2,
+   "setting": "sleep1-get1",
+   "patched_jar": true,
+   "canal_get_timeout": 1,
+   "closed3_tps": 54.618,
+   "closed3_cache_p50": 11.023,
+   "closed3_cache_p99": 23.498,
+   "w32_tps": 959.697,
+   "w32_cache_p50": 53.808,
+   "w32_cache_p99": 454.653,
+   "w32_put_p50": 26.768,
+   "w32_put_p99": 130.183,
+   "w32_host_cpu": 86.41,
+   "w32_peak_lag": {
+    "cachepulse-cache-sync": 2,
+    "cachepulse-archive": 749
+   },
+   "idle_canal": {
+    "n": 80,
+    "mean": 0.8,
+    "p50": 0.7,
+    "p95": 1.9,
+    "p99": 3.4,
+    "max": 4.8
+   },
+   "idle_total": {
+    "n": 80,
+    "mean": 6.0,
+    "p50": 5.9,
+    "p95": 8.4,
+    "p99": 12.7,
+    "max": 15.4
+   },
+   "restarts": {
+    "cp-cache-sync-service": 0,
+    "cp-archive-service": 0,
+    "cp-delivery-service": 0,
+    "cp-demo-user-service": 0,
+    "canal-server": 0,
+    "kafka": 0,
+    "mysql": 0,
+    "redis": 0,
+    "research-postgres": 0
+   }
+  },
+  {
+   "round": 3,
+   "setting": "sleep1-get5",
+   "patched_jar": true,
+   "canal_get_timeout": 5,
+   "closed3_tps": 56.467,
+   "closed3_cache_p50": 12.254,
+   "closed3_cache_p99": 28.956,
+   "w32_tps": 1015.237,
+   "w32_cache_p50": 54.028,
+   "w32_cache_p99": 157.905,
+   "w32_put_p50": 26.907,
+   "w32_put_p99": 123.141,
+   "w32_host_cpu": 90.21,
+   "w32_peak_lag": {
+    "cachepulse-cache-sync": 8,
+    "cachepulse-archive": 377
+   },
+   "idle_canal": {
+    "n": 80,
+    "mean": 2.7,
+    "p50": 2.7,
+    "p95": 5.3,
+    "p99": 6.0,
+    "max": 6.3
+   },
+   "idle_total": {
+    "n": 80,
+    "mean": 8.8,
+    "p50": 8.5,
+    "p95": 14.8,
+    "p99": 16.5,
+    "max": 19.9
+   },
+   "restarts": {
+    "cp-cache-sync-service": 0,
+    "cp-archive-service": 0,
+    "cp-delivery-service": 0,
+    "cp-demo-user-service": 0,
+    "canal-server": 0,
+    "kafka": 0,
+    "mysql": 0,
+    "redis": 0,
+    "research-postgres": 0
+   }
+  },
+  {
+   "round": 4,
+   "setting": "sleep1-get5",
+   "patched_jar": true,
+   "canal_get_timeout": 5,
+   "closed3_tps": 42.881,
+   "closed3_cache_p50": 12.175,
+   "closed3_cache_p99": 24.18,
+   "w32_tps": 957.14,
+   "w32_cache_p50": 53.805,
+   "w32_cache_p99": 374.687,
+   "w32_put_p50": 24.791,
+   "w32_put_p99": 300.687,
+   "w32_host_cpu": 79.19,
+   "w32_peak_lag": {
+    "cachepulse-cache-sync": 38,
+    "cachepulse-archive": 417
+   },
+   "idle_canal": {
+    "n": 80,
+    "mean": 2.5,
+    "p50": 2.5,
+    "p95": 5.1,
+    "p99": 6.7,
+    "max": 8.0
+   },
+   "idle_total": {
+    "n": 80,
+    "mean": 8.3,
+    "p50": 7.8,
+    "p95": 15.9,
+    "p99": 17.1,
+    "max": 17.4
+   },
+   "restarts": {
+    "cp-cache-sync-service": 0,
+    "cp-archive-service": 0,
+    "cp-delivery-service": 0,
+    "cp-demo-user-service": 0,
+    "canal-server": 0,
+    "kafka": 0,
+    "mysql": 0,
+    "redis": 0,
+    "research-postgres": 0
+   }
+  },
+  {
+   "round": 5,
+   "setting": "sleep1-get1",
+   "patched_jar": true,
+   "canal_get_timeout": 1,
+   "closed3_tps": 45.248,
+   "closed3_cache_p50": 9.832,
+   "closed3_cache_p99": 128.615,
+   "w32_tps": 818.848,
+   "w32_cache_p50": 42.22,
+   "w32_cache_p99": 564.581,
+   "w32_put_p50": 26.553,
+   "w32_put_p99": 510.311,
+   "w32_host_cpu": 72.96,
+   "w32_peak_lag": {
+    "cachepulse-cache-sync": 6,
+    "cachepulse-archive": 2279
+   },
+   "idle_canal": {
+    "n": 80,
+    "mean": 0.8,
+    "p50": 0.7,
+    "p95": 1.9,
+    "p99": 4.5,
+    "max": 11.1
+   },
+   "idle_total": {
+    "n": 80,
+    "mean": 6.7,
+    "p50": 5.8,
+    "p95": 12.5,
+    "p99": 17.7,
+    "max": 26.2
+   },
+   "restarts": {
+    "cp-cache-sync-service": 0,
+    "cp-archive-service": 0,
+    "cp-delivery-service": 0,
+    "cp-demo-user-service": 0,
+    "canal-server": 0,
+    "kafka": 0,
+    "mysql": 0,
+    "redis": 0,
+    "research-postgres": 0
+   }
+  },
+  {
+   "round": 6,
+   "setting": "original",
+   "patched_jar": false,
+   "canal_get_timeout": 5,
+   "closed3_tps": 26.776,
+   "closed3_cache_p50": 101.058,
+   "closed3_cache_p99": 120.653,
+   "w32_tps": 782.677,
+   "w32_cache_p50": 109.161,
+   "w32_cache_p99": 573.405,
+   "w32_put_p50": 27.335,
+   "w32_put_p99": 508.534,
+   "w32_host_cpu": 71.32,
+   "w32_peak_lag": {
+    "cachepulse-cache-sync": 5,
+    "cachepulse-archive": 985
+   },
+   "idle_canal": {
+    "n": 80,
+    "mean": 52.1,
+    "p50": 56.0,
+    "p95": 98.3,
+    "p99": 102.9,
+    "max": 104.5
+   },
+   "idle_total": {
+    "n": 80,
+    "mean": 57.9,
+    "p50": 61.3,
+    "p95": 104.5,
+    "p99": 107.7,
+    "max": 109.8
+   },
+   "restarts": {
+    "cp-cache-sync-service": 0,
+    "cp-archive-service": 0,
+    "cp-delivery-service": 0,
+    "cp-demo-user-service": 0,
+    "canal-server": 0,
+    "kafka": 0,
+    "mysql": 0,
+    "redis": 0,
+    "research-postgres": 0
+   }
+  }
+ ],
+ "completed": true,
+ "restored": {
+  "sleep1-get1": {
+   "patched_jar": true,
+   "canal_get_timeout": 1
+  }
+ },
+ "finished_at": "2026-11-26T06:37:37.987592+00:00"
+}

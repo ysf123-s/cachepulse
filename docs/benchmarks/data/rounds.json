@@ -1,0 +1,2222 @@
+{
+ "cachepulse-background-pace-20261125": [
+  {
+   "round": 1,
+   "rate": 0,
+   "delivery": "active",
+   "timing_mode": "auto",
+   "directory": "1-rate0",
+   "write_seconds": 12.097,
+   "updates_per_second": 474.091,
+   "successful_updates": 5735,
+   "cache_ms": {
+    "count": 156,
+    "p50_ms": 62.499,
+    "p95_ms": 150.468,
+    "p99_ms": 235.605,
+    "max_ms": 295.701
+   },
+   "writer_server_timing": {
+    "write": {
+     "p50_ms": 33.849,
+     "p99_ms": 175.48
+    },
+    "jdbc": {
+     "p50_ms": 10.182,
+     "p99_ms": 66.822
+    },
+    "acquire": {
+     "p50_ms": 3.234,
+     "p99_ms": 153.257
+    },
+    "hold": {
+     "p50_ms": 14.521,
+     "p99_ms": 96.287
+    }
+   },
+   "probe_server_timing": {
+    "write": {
+     "p50_ms": 29.16,
+     "p99_ms": 190.71
+    },
+    "jdbc": {
+     "p50_ms": 10.014,
+     "p99_ms": 65.329
+    },
+    "acquire": {
+     "p50_ms": 3.298,
+     "p99_ms": 188.166
+    },
+    "hold": {
+     "p50_ms": 13.681,
+     "p99_ms": 86.445
+    }
+   },
+   "cpu_mean_percent": 97.97,
+   "max_iowait_percent": 0.11,
+   "peak_consumer_lag": {
+    "cachepulse-cache-sync": 3,
+    "cachepulse-archive": 130,
+    "cachepulse-delivery": 43
+   },
+   "backlog_cleared_seconds": 2.551
+  },
+  {
+   "round": 2,
+   "rate": 650,
+   "delivery": "active",
+   "timing_mode": "auto",
+   "directory": "2-rate650",
+   "write_seconds": 12.012,
+   "updates_per_second": 721.475,
+   "successful_updates": 8666,
+   "cache_ms": {
+    "count": 283,
+    "p50_ms": 40.453,
+    "p95_ms": 92.34,
+    "p99_ms": 124.856,
+    "max_ms": 173.699
+   },
+   "writer_server_timing": {
+    "write": {
+     "p50_ms": 12.368,
+     "p99_ms": 105.436
+    },
+    "jdbc": {
+     "p50_ms": 6.399,
+     "p99_ms": 39.382
+    },
+    "acquire": {
+     "p50_ms": 0.008,
+     "p99_ms": 83.366
+    },
+    "hold": {
+     "p50_ms": 8.505,
+     "p99_ms": 61.254
+    }
+   },
+   "probe_server_timing": {
+    "write": {
+     "p50_ms": 11.816,
+     "p99_ms": 97.426
+    },
+    "jdbc": {
+     "p50_ms": 5.354,
+     "p99_ms": 34.702
+    },
+    "acquire": {
+     "p50_ms": 0.008,
+     "p99_ms": 72.75
+    },
+    "hold": {
+     "p50_ms": 7.794,
+     "p99_ms": 53.167
+    }
+   },
+   "cpu_mean_percent": 97.45,
+   "max_iowait_percent": 0.35,
+   "peak_consumer_lag": {
+    "cachepulse-cache-sync": 6,
+    "cachepulse-archive": 1103,
+    "cachepulse-delivery": 638
+   },
+   "backlog_cleared_seconds": 2.417
+  },
+  {
+   "round": 3,
+   "rate": 650,
+   "delivery": "active",
+   "timing_mode": "auto",
+   "directory": "3-rate650",
+   "write_seconds": 12.021,
+   "updates_per_second": 794.369,
+   "successful_updates": 9549,
+   "cache_ms": {
+    "count": 435,
+    "p50_ms": 16.58,
+    "p95_ms": 47.281,
+    "p99_ms": 80.448,
+    "max_ms": 120.714
+   },
+   "writer_server_timing": {
+    "write": {
+     "p50_ms": 2.548,
+     "p99_ms": 42.379
+    },
+    "jdbc": {
+     "p50_ms": 2.26,
+     "p99_ms": 20.232
+    },
+    "acquire": {
+     "p50_ms": 0.003,
+     "p99_ms": 26.433
+    },
+    "hold": {
+     "p50_ms": 2.46,
+     "p99_ms": 23.85
+    }
+   },
+   "probe_server_timing": {
+    "write": {
+     "p50_ms": 3.0,
+     "p99_ms": 48.545
+    },
+    "jdbc": {
+     "p50_ms": 2.694,
+     "p99_ms": 17.383
+    },
+    "acquire": {
+     "p50_ms": 0.003,
+     "p99_ms": 14.775
+    },
+    "hold": {
+     "p50_ms": 2.89,
+     "p99_ms": 18.343
+    }
+   },
+   "cpu_mean_percent": 85.24,
+   "max_iowait_percent": 1.39,
+   "peak_consumer_lag": {
+    "cachepulse-cache-sync": 3,
+    "cachepulse-archive": 1120,
+    "cachepulse-delivery": 1147
+   },
+   "backlog_cleared_seconds": 4.384
+  },
+  {
+   "round": 4,
+   "rate": 0,
+   "delivery": "active",
+   "timing_mode": "auto",
+   "directory": "4-rate0",
+   "write_seconds": 12.011,
+   "updates_per_second": 741.9,
+   "successful_updates": 8911,
+   "cache_ms": {
+    "count": 301,
+    "p50_ms": 41.794,
+    "p95_ms": 102.76,
+    "p99_ms": 144.201,
+    "max_ms": 183.211
+   },
+   "writer_server_timing": {
+    "write": {
+     "p50_ms": 12.433,
+     "p99_ms": 100.722
+    },
+    "jdbc": {
+     "p50_ms": 7.15,
+     "p99_ms": 37.09
+    },
+    "acquire": {
+     "p50_ms": 0.009,
+     "p99_ms": 87.187
+    },
+    "hold": {
+     "p50_ms": 8.6,
+     "p99_ms": 47.07
+    }
+   },
+   "probe_server_timing": {
+    "write": {
+     "p50_ms": 11.984,
+     "p99_ms": 105.084
+    },
+    "jdbc": {
+     "p50_ms": 6.406,
+     "p99_ms": 29.562
+    },
+    "acquire": {
+     "p50_ms": 0.01,
+     "p99_ms": 91.124
+    },
+    "hold": {
+     "p50_ms": 7.899,
+     "p99_ms": 43.751
+    }
+   },
+   "cpu_mean_percent": 92.52,
+   "max_iowait_percent": 0.67,
+   "peak_consumer_lag": {
+    "cachepulse-cache-sync": 4,
+    "cachepulse-archive": 1617,
+    "cachepulse-delivery": 149
+   },
+   "backlog_cleared_seconds": 2.355
+  }
+ ],
+ "cachepulse-background-pace-long-20261126": [
+  {
+   "round": 1,
+   "rate": 0,
+   "delivery": "active",
+   "timing_mode": "auto",
+   "directory": "1-rate0",
+   "write_seconds": 75.559,
+   "updates_per_second": 629.231,
+   "successful_updates": 47544,
+   "cache_ms": {
+    "count": 1492,
+    "p50_ms": 48.55,
+    "p95_ms": 136.874,
+    "p99_ms": 430.647,
+    "max_ms": 712.139
+   },
+   "writer_server_timing": {
+    "write": {
+     "p50_ms": 16.268,
+     "p99_ms": 177.26
+    },
+    "jdbc": {
+     "p50_ms": 8.067,
+     "p99_ms": 52.015
+    },
+    "acquire": {
+     "p50_ms": 0.015,
+     "p99_ms": 127.9
+    },
+    "hold": {
+     "p50_ms": 9.893,
+     "p99_ms": 68.705
+    }
+   },
+   "probe_server_timing": {
+    "write": {
+     "p50_ms": 15.2,
+     "p99_ms": 363.602
+    },
+    "jdbc": {
+     "p50_ms": 7.72,
+     "p99_ms": 40.809
+    },
+    "acquire": {
+     "p50_ms": 0.016,
+     "p99_ms": 339.129
+    },
+    "hold": {
+     "p50_ms": 9.36,
+     "p99_ms": 57.836
+    }
+   },
+   "cpu_mean_percent": 91.28,
+   "max_iowait_percent": 14.22,
+   "peak_consumer_lag": {
+    "cachepulse-cache-sync": 9,
+    "cachepulse-archive": 1223,
+    "cachepulse-delivery": 394
+   },
+   "backlog_cleared_seconds": 1.367
+  },
+  {
+   "round": 2,
+   "rate": 650,
+   "delivery": "active",
+   "timing_mode": "auto",
+   "directory": "2-rate650",
+   "write_seconds": 75.052,
+   "updates_per_second": 704.82,
+   "successful_updates": 52898,
+   "cache_ms": {
+    "count": 1720,
+    "p50_ms": 48.2,
+    "p95_ms": 112.123,
+    "p99_ms": 180.612,
+    "max_ms": 441.932
+   },
+   "writer_server_timing": {
+    "write": {
+     "p50_ms": 14.201,
+     "p99_ms": 104.982
+    },
+    "jdbc": {
+     "p50_ms": 7.746,
+     "p99_ms": 35.778
+    },
+    "acquire": {
+     "p50_ms": 0.012,
+     "p99_ms": 83.758
+    },
+    "hold": {
+     "p50_ms": 9.255,
+     "p99_ms": 46.595
+    }
+   },
+   "probe_server_timing": {
+    "write": {
+     "p50_ms": 14.21,
+     "p99_ms": 112.513
+    },
+    "jdbc": {
+     "p50_ms": 7.081,
+     "p99_ms": 31.861
+    },
+    "acquire": {
+     "p50_ms": 0.014,
+     "p99_ms": 100.602
+    },
+    "hold": {
+     "p50_ms": 8.693,
+     "p99_ms": 41.48
+    }
+   },
+   "cpu_mean_percent": 92.96,
+   "max_iowait_percent": 12.85,
+   "peak_consumer_lag": {
+    "cachepulse-cache-sync": 8,
+    "cachepulse-archive": 1513,
+    "cachepulse-delivery": 901
+   },
+   "backlog_cleared_seconds": 3.66
+  }
+ ],
+ "cachepulse-connection-hold-20261125": [
+  {
+   "round": 1,
+   "pool_size": 10,
+   "delivery": "active",
+   "timing_mode": "auto",
+   "directory": "1-pool10",
+   "write_seconds": 20.032,
+   "updates_per_second": 593.4,
+   "successful_updates": 11887,
+   "cache_ms": {
+    "count": 313,
+    "p50_ms": 55.715,
+    "p95_ms": 152.29,
+    "p99_ms": 191.622,
+    "max_ms": 221.141
+   },
+   "writer_server_timing": {
+    "write": {
+     "p50_ms": 27.866,
+     "p99_ms": 147.925
+    },
+    "jdbc": {
+     "p50_ms": 8.466,
+     "p99_ms": 52.978
+    },
+    "acquire": {
+     "p50_ms": 4.932,
+     "p99_ms": 125.215
+    },
+    "hold": {
+     "p50_ms": 11.136,
+     "p99_ms": 74.427
+    }
+   },
+   "probe_server_timing": {
+    "write": {
+     "p50_ms": 24.875,
+     "p99_ms": 160.654
+    },
+    "jdbc": {
+     "p50_ms": 7.699,
+     "p99_ms": 46.204
+    },
+    "acquire": {
+     "p50_ms": 7.439,
+     "p99_ms": 144.831
+    },
+    "hold": {
+     "p50_ms": 9.558,
+     "p99_ms": 83.613
+    }
+   },
+   "cpu_mean_percent": 97.48,
+   "max_iowait_percent": 0.35,
+   "peak_consumer_lag": {
+    "cachepulse-cache-sync": 1,
+    "cachepulse-archive": 44,
+    "cachepulse-delivery": 47
+   }
+  },
+  {
+   "round": 2,
+   "pool_size": 14,
+   "delivery": "active",
+   "timing_mode": "auto",
+   "directory": "2-pool14",
+   "write_seconds": 20.034,
+   "updates_per_second": 523.968,
+   "successful_updates": 10497,
+   "cache_ms": {
+    "count": 275,
+    "p50_ms": 59.953,
+    "p95_ms": 141.242,
+    "p99_ms": 166.395,
+    "max_ms": 226.359
+   },
+   "writer_server_timing": {
+    "write": {
+     "p50_ms": 28.463,
+     "p99_ms": 174.96
+    },
+    "jdbc": {
+     "p50_ms": 10.834,
+     "p99_ms": 74.123
+    },
+    "acquire": {
+     "p50_ms": 0.027,
+     "p99_ms": 109.104
+    },
+    "hold": {
+     "p50_ms": 21.877,
+     "p99_ms": 132.174
+    }
+   },
+   "probe_server_timing": {
+    "write": {
+     "p50_ms": 32.874,
+     "p99_ms": 192.136
+    },
+    "jdbc": {
+     "p50_ms": 13.075,
+     "p99_ms": 80.854
+    },
+    "acquire": {
+     "p50_ms": 0.032,
+     "p99_ms": 126.505
+    },
+    "hold": {
+     "p50_ms": 22.886,
+     "p99_ms": 129.134
+    }
+   },
+   "cpu_mean_percent": 97.74,
+   "max_iowait_percent": 0.12,
+   "peak_consumer_lag": {
+    "cachepulse-cache-sync": 4,
+    "cachepulse-archive": 28,
+    "cachepulse-delivery": 35
+   }
+  },
+  {
+   "round": 3,
+   "pool_size": 14,
+   "delivery": "active",
+   "timing_mode": "auto",
+   "directory": "3-pool14",
+   "write_seconds": 20.036,
+   "updates_per_second": 603.707,
+   "successful_updates": 12096,
+   "cache_ms": {
+    "count": 322,
+    "p50_ms": 51.305,
+    "p95_ms": 116.891,
+    "p99_ms": 151.409,
+    "max_ms": 204.477
+   },
+   "writer_server_timing": {
+    "write": {
+     "p50_ms": 26.153,
+     "p99_ms": 144.478
+    },
+    "jdbc": {
+     "p50_ms": 9.842,
+     "p99_ms": 64.857
+    },
+    "acquire": {
+     "p50_ms": 0.018,
+     "p99_ms": 99.523
+    },
+    "hold": {
+     "p50_ms": 19.849,
+     "p99_ms": 116.464
+    }
+   },
+   "probe_server_timing": {
+    "write": {
+     "p50_ms": 27.568,
+     "p99_ms": 137.721
+    },
+    "jdbc": {
+     "p50_ms": 10.183,
+     "p99_ms": 53.934
+    },
+    "acquire": {
+     "p50_ms": 0.02,
+     "p99_ms": 91.728
+    },
+    "hold": {
+     "p50_ms": 20.421,
+     "p99_ms": 111.282
+    }
+   },
+   "cpu_mean_percent": 97.03,
+   "max_iowait_percent": 0.32,
+   "peak_consumer_lag": {
+    "cachepulse-cache-sync": 5,
+    "cachepulse-archive": 21,
+    "cachepulse-delivery": 57
+   }
+  },
+  {
+   "round": 4,
+   "pool_size": 10,
+   "delivery": "active",
+   "timing_mode": "auto",
+   "directory": "4-pool10",
+   "write_seconds": 20.042,
+   "updates_per_second": 632.174,
+   "successful_updates": 12670,
+   "cache_ms": {
+    "count": 319,
+    "p50_ms": 53.814,
+    "p95_ms": 127.48,
+    "p99_ms": 176.043,
+    "max_ms": 258.669
+   },
+   "writer_server_timing": {
+    "write": {
+     "p50_ms": 25.593,
+     "p99_ms": 143.913
+    },
+    "jdbc": {
+     "p50_ms": 7.867,
+     "p99_ms": 50.352
+    },
+    "acquire": {
+     "p50_ms": 3.479,
+     "p99_ms": 121.112
+    },
+    "hold": {
+     "p50_ms": 11.061,
+     "p99_ms": 87.419
+    }
+   },
+   "probe_server_timing": {
+    "write": {
+     "p50_ms": 23.677,
+     "p99_ms": 154.718
+    },
+    "jdbc": {
+     "p50_ms": 8.023,
+     "p99_ms": 45.026
+    },
+    "acquire": {
+     "p50_ms": 3.02,
+     "p99_ms": 128.91
+    },
+    "hold": {
+     "p50_ms": 11.097,
+     "p99_ms": 71.039
+    }
+   },
+   "cpu_mean_percent": 97.13,
+   "max_iowait_percent": 0.35,
+   "peak_consumer_lag": {
+    "cachepulse-cache-sync": 2,
+    "cachepulse-archive": 23,
+    "cachepulse-delivery": 20
+   }
+  }
+ ],
+ "cachepulse-cpu-sustained-20261125": [
+  {
+   "round": 1,
+   "pool_size": 10,
+   "delivery": "active",
+   "timing_mode": "auto",
+   "cpu_weight": 100,
+   "phase": "warmup",
+   "directory": "1-warmup-weight100",
+   "write_seconds": 45.031,
+   "updates_per_second": 760.768,
+   "successful_updates": 34258,
+   "cache_ms": {
+    "count": 905,
+    "p50_ms": 47.322,
+    "p95_ms": 108.836,
+    "p99_ms": 169.219,
+    "max_ms": 221.197
+   },
+   "writer_server_timing": {
+    "write": {
+     "p50_ms": 17.378,
+     "p99_ms": 125.402
+    },
+    "jdbc": {
+     "p50_ms": 7.103,
+     "p99_ms": 41.016
+    },
+    "acquire": {
+     "p50_ms": 0.341,
+     "p99_ms": 109.784
+    },
+    "hold": {
+     "p50_ms": 8.766,
+     "p99_ms": 59.082
+    }
+   },
+   "probe_server_timing": {
+    "write": {
+     "p50_ms": 17.917,
+     "p99_ms": 136.917
+    },
+    "jdbc": {
+     "p50_ms": 7.173,
+     "p99_ms": 47.973
+    },
+    "acquire": {
+     "p50_ms": 0.954,
+     "p99_ms": 120.98
+    },
+    "hold": {
+     "p50_ms": 8.732,
+     "p99_ms": 64.252
+    }
+   },
+   "cpu_mean_percent": 97.5,
+   "max_iowait_percent": 0.57,
+   "peak_consumer_lag": {
+    "cachepulse-cache-sync": 2,
+    "cachepulse-archive": 479,
+    "cachepulse-delivery": 449
+   }
+  },
+  {
+   "round": 2,
+   "pool_size": 10,
+   "delivery": "active",
+   "timing_mode": "auto",
+   "cpu_weight": 100,
+   "phase": "comparison",
+   "directory": "2-comparison-weight100",
+   "write_seconds": 20.03,
+   "updates_per_second": 880.709,
+   "successful_updates": 17641,
+   "cache_ms": {
+    "count": 513,
+    "p50_ms": 40.066,
+    "p95_ms": 95.65,
+    "p99_ms": 140.468,
+    "max_ms": 201.592
+   },
+   "writer_server_timing": {
+    "write": {
+     "p50_ms": 12.683,
+     "p99_ms": 102.451
+    },
+    "jdbc": {
+     "p50_ms": 6.612,
+     "p99_ms": 27.767
+    },
+    "acquire": {
+     "p50_ms": 0.014,
+     "p99_ms": 77.373
+    },
+    "hold": {
+     "p50_ms": 7.837,
+     "p99_ms": 34.341
+    }
+   },
+   "probe_server_timing": {
+    "write": {
+     "p50_ms": 13.157,
+     "p99_ms": 113.115
+    },
+    "jdbc": {
+     "p50_ms": 6.895,
+     "p99_ms": 33.804
+    },
+    "acquire": {
+     "p50_ms": 0.037,
+     "p99_ms": 104.118
+    },
+    "hold": {
+     "p50_ms": 8.109,
+     "p99_ms": 37.725
+    }
+   },
+   "cpu_mean_percent": 94.79,
+   "max_iowait_percent": 0.66,
+   "peak_consumer_lag": {
+    "cachepulse-cache-sync": 18,
+    "cachepulse-archive": 414,
+    "cachepulse-delivery": 263
+   }
+  },
+  {
+   "round": 3,
+   "pool_size": 10,
+   "delivery": "active",
+   "timing_mode": "auto",
+   "cpu_weight": 235,
+   "phase": "comparison",
+   "directory": "3-comparison-weight235",
+   "write_seconds": 20.033,
+   "updates_per_second": 1009.629,
+   "successful_updates": 20226,
+   "cache_ms": {
+    "count": 548,
+    "p50_ms": 43.846,
+    "p95_ms": 94.728,
+    "p99_ms": 140.955,
+    "max_ms": 171.529
+   },
+   "writer_server_timing": {
+    "write": {
+     "p50_ms": 11.596,
+     "p99_ms": 104.663
+    },
+    "jdbc": {
+     "p50_ms": 5.973,
+     "p99_ms": 25.212
+    },
+    "acquire": {
+     "p50_ms": 2.45,
+     "p99_ms": 64.878
+    },
+    "hold": {
+     "p50_ms": 6.302,
+     "p99_ms": 25.947
+    }
+   },
+   "probe_server_timing": {
+    "write": {
+     "p50_ms": 10.863,
+     "p99_ms": 112.147
+    },
+    "jdbc": {
+     "p50_ms": 5.798,
+     "p99_ms": 25.194
+    },
+    "acquire": {
+     "p50_ms": 2.308,
+     "p99_ms": 105.743
+    },
+    "hold": {
+     "p50_ms": 6.075,
+     "p99_ms": 25.355
+    }
+   },
+   "cpu_mean_percent": 89.61,
+   "max_iowait_percent": 1.15,
+   "peak_consumer_lag": {
+    "cachepulse-cache-sync": 6,
+    "cachepulse-archive": 993,
+    "cachepulse-delivery": 625
+   }
+  },
+  {
+   "round": 4,
+   "pool_size": 10,
+   "delivery": "active",
+   "timing_mode": "auto",
+   "cpu_weight": 235,
+   "phase": "comparison",
+   "directory": "4-comparison-weight235",
+   "write_seconds": 20.023,
+   "updates_per_second": 980.489,
+   "successful_updates": 19632,
+   "cache_ms": {
+    "count": 549,
+    "p50_ms": 42.33,
+    "p95_ms": 112.095,
+    "p99_ms": 145.81,
+    "max_ms": 155.386
+   },
+   "writer_server_timing": {
+    "write": {
+     "p50_ms": 10.867,
+     "p99_ms": 105.042
+    },
+    "jdbc": {
+     "p50_ms": 6.091,
+     "p99_ms": 27.147
+    },
+    "acquire": {
+     "p50_ms": 1.511,
+     "p99_ms": 90.149
+    },
+    "hold": {
+     "p50_ms": 6.385,
+     "p99_ms": 27.786
+    }
+   },
+   "probe_server_timing": {
+    "write": {
+     "p50_ms": 11.519,
+     "p99_ms": 115.613
+    },
+    "jdbc": {
+     "p50_ms": 5.786,
+     "p99_ms": 24.351
+    },
+    "acquire": {
+     "p50_ms": 3.244,
+     "p99_ms": 104.24
+    },
+    "hold": {
+     "p50_ms": 6.059,
+     "p99_ms": 24.385
+    }
+   },
+   "cpu_mean_percent": 88.89,
+   "max_iowait_percent": 1.14,
+   "peak_consumer_lag": {
+    "cachepulse-cache-sync": 6,
+    "cachepulse-archive": 912,
+    "cachepulse-delivery": 899
+   }
+  },
+  {
+   "round": 5,
+   "pool_size": 10,
+   "delivery": "active",
+   "timing_mode": "auto",
+   "cpu_weight": 100,
+   "phase": "comparison",
+   "directory": "5-comparison-weight100",
+   "write_seconds": 20.024,
+   "updates_per_second": 1057.372,
+   "successful_updates": 21173,
+   "cache_ms": {
+    "count": 501,
+    "p50_ms": 43.718,
+    "p95_ms": 106.807,
+    "p99_ms": 156.611,
+    "max_ms": 203.614
+   },
+   "writer_server_timing": {
+    "write": {
+     "p50_ms": 11.921,
+     "p99_ms": 91.295
+    },
+    "jdbc": {
+     "p50_ms": 5.716,
+     "p99_ms": 26.845
+    },
+    "acquire": {
+     "p50_ms": 0.077,
+     "p99_ms": 69.138
+    },
+    "hold": {
+     "p50_ms": 6.656,
+     "p99_ms": 33.601
+    }
+   },
+   "probe_server_timing": {
+    "write": {
+     "p50_ms": 11.802,
+     "p99_ms": 94.622
+    },
+    "jdbc": {
+     "p50_ms": 5.095,
+     "p99_ms": 27.419
+    },
+    "acquire": {
+     "p50_ms": 1.17,
+     "p99_ms": 82.955
+    },
+    "hold": {
+     "p50_ms": 5.873,
+     "p99_ms": 28.227
+    }
+   },
+   "cpu_mean_percent": 90.66,
+   "max_iowait_percent": 0.93,
+   "peak_consumer_lag": {
+    "cachepulse-cache-sync": 6,
+    "cachepulse-archive": 812,
+    "cachepulse-delivery": 737
+   }
+  }
+ ],
+ "cachepulse-cpu-weight-20261125": [
+  {
+   "round": 1,
+   "pool_size": 10,
+   "delivery": "active",
+   "timing_mode": "auto",
+   "cpu_weight": 100,
+   "directory": "1-weight100",
+   "write_seconds": 20.039,
+   "updates_per_second": 633.304,
+   "successful_updates": 12691,
+   "cache_ms": {
+    "count": 317,
+    "p50_ms": 56.047,
+    "p95_ms": 151.982,
+    "p99_ms": 225.62,
+    "max_ms": 299.001
+   },
+   "writer_server_timing": {
+    "write": {
+     "p50_ms": 25.556,
+     "p99_ms": 145.784
+    },
+    "jdbc": {
+     "p50_ms": 7.93,
+     "p99_ms": 54.717
+    },
+    "acquire": {
+     "p50_ms": 4.06,
+     "p99_ms": 129.278
+    },
+    "hold": {
+     "p50_ms": 10.576,
+     "p99_ms": 76.357
+    }
+   },
+   "probe_server_timing": {
+    "write": {
+     "p50_ms": 26.558,
+     "p99_ms": 168.197
+    },
+    "jdbc": {
+     "p50_ms": 8.556,
+     "p99_ms": 98.793
+    },
+    "acquire": {
+     "p50_ms": 1.19,
+     "p99_ms": 146.597
+    },
+    "hold": {
+     "p50_ms": 10.837,
+     "p99_ms": 99.317
+    }
+   },
+   "cpu_mean_percent": 95.74,
+   "max_iowait_percent": 0.24,
+   "peak_consumer_lag": {
+    "cachepulse-cache-sync": 3,
+    "cachepulse-archive": 32,
+    "cachepulse-delivery": 49
+   }
+  },
+  {
+   "round": 2,
+   "pool_size": 10,
+   "delivery": "active",
+   "timing_mode": "auto",
+   "cpu_weight": 235,
+   "directory": "2-weight235",
+   "write_seconds": 20.043,
+   "updates_per_second": 938.633,
+   "successful_updates": 18813,
+   "cache_ms": {
+    "count": 593,
+    "p50_ms": 38.411,
+    "p95_ms": 84.533,
+    "p99_ms": 132.837,
+    "max_ms": 173.323
+   },
+   "writer_server_timing": {
+    "write": {
+     "p50_ms": 9.999,
+     "p99_ms": 97.785
+    },
+    "jdbc": {
+     "p50_ms": 5.908,
+     "p99_ms": 25.212
+    },
+    "acquire": {
+     "p50_ms": 0.013,
+     "p99_ms": 69.442
+    },
+    "hold": {
+     "p50_ms": 6.296,
+     "p99_ms": 27.493
+    }
+   },
+   "probe_server_timing": {
+    "write": {
+     "p50_ms": 9.24,
+     "p99_ms": 103.52
+    },
+    "jdbc": {
+     "p50_ms": 5.882,
+     "p99_ms": 26.481
+    },
+    "acquire": {
+     "p50_ms": 0.012,
+     "p99_ms": 93.444
+    },
+    "hold": {
+     "p50_ms": 6.257,
+     "p99_ms": 26.568
+    }
+   },
+   "cpu_mean_percent": 92.97,
+   "max_iowait_percent": 0.67,
+   "peak_consumer_lag": {
+    "cachepulse-cache-sync": 9,
+    "cachepulse-archive": 427,
+    "cachepulse-delivery": 555
+   }
+  },
+  {
+   "round": 3,
+   "pool_size": 10,
+   "delivery": "active",
+   "timing_mode": "auto",
+   "cpu_weight": 235,
+   "directory": "3-weight235",
+   "write_seconds": 20.027,
+   "updates_per_second": 992.231,
+   "successful_updates": 19871,
+   "cache_ms": {
+    "count": 575,
+    "p50_ms": 39.809,
+    "p95_ms": 79.202,
+    "p99_ms": 125.685,
+    "max_ms": 163.52
+   },
+   "writer_server_timing": {
+    "write": {
+     "p50_ms": 11.271,
+     "p99_ms": 66.482
+    },
+    "jdbc": {
+     "p50_ms": 6.151,
+     "p99_ms": 23.318
+    },
+    "acquire": {
+     "p50_ms": 1.205,
+     "p99_ms": 53.219
+    },
+    "hold": {
+     "p50_ms": 6.479,
+     "p99_ms": 24.554
+    }
+   },
+   "probe_server_timing": {
+    "write": {
+     "p50_ms": 9.765,
+     "p99_ms": 58.815
+    },
+    "jdbc": {
+     "p50_ms": 5.746,
+     "p99_ms": 23.293
+    },
+    "acquire": {
+     "p50_ms": 0.112,
+     "p99_ms": 48.625
+    },
+    "hold": {
+     "p50_ms": 6.073,
+     "p99_ms": 23.922
+    }
+   },
+   "cpu_mean_percent": 91.72,
+   "max_iowait_percent": 1.02,
+   "peak_consumer_lag": {
+    "cachepulse-cache-sync": 12,
+    "cachepulse-archive": 432,
+    "cachepulse-delivery": 440
+   }
+  },
+  {
+   "round": 4,
+   "pool_size": 10,
+   "delivery": "active",
+   "timing_mode": "auto",
+   "cpu_weight": 100,
+   "directory": "4-weight100",
+   "write_seconds": 20.034,
+   "updates_per_second": 1007.313,
+   "successful_updates": 20180,
+   "cache_ms": {
+    "count": 553,
+    "p50_ms": 36.228,
+    "p95_ms": 81.637,
+    "p99_ms": 120.396,
+    "max_ms": 144.304
+   },
+   "writer_server_timing": {
+    "write": {
+     "p50_ms": 10.902,
+     "p99_ms": 77.697
+    },
+    "jdbc": {
+     "p50_ms": 5.752,
+     "p99_ms": 25.279
+    },
+    "acquire": {
+     "p50_ms": 0.012,
+     "p99_ms": 62.89
+    },
+    "hold": {
+     "p50_ms": 6.685,
+     "p99_ms": 31.233
+    }
+   },
+   "probe_server_timing": {
+    "write": {
+     "p50_ms": 10.527,
+     "p99_ms": 92.792
+    },
+    "jdbc": {
+     "p50_ms": 5.736,
+     "p99_ms": 22.895
+    },
+    "acquire": {
+     "p50_ms": 0.014,
+     "p99_ms": 84.098
+    },
+    "hold": {
+     "p50_ms": 6.605,
+     "p99_ms": 28.231
+    }
+   },
+   "cpu_mean_percent": 92.88,
+   "max_iowait_percent": 0.7,
+   "peak_consumer_lag": {
+    "cachepulse-cache-sync": 3,
+    "cachepulse-archive": 497,
+    "cachepulse-delivery": 443
+   }
+  }
+ ],
+ "cachepulse-delivery-rate-ab-20261125": [
+  {
+   "round": 1,
+   "delivery": "active",
+   "timing_mode": "auto",
+   "directory": "1-original",
+   "write_seconds": 20.005,
+   "updates_per_second": 443.736,
+   "successful_updates": 8877,
+   "cache_ms": {
+    "count": 585,
+    "p50_ms": 27.834,
+    "p95_ms": 66.324,
+    "p99_ms": 143.741,
+    "max_ms": 218.313
+   },
+   "writer_server_timing": {
+    "write": {
+     "p50_ms": 6.741,
+     "p99_ms": 109.405
+    },
+    "jdbc": {
+     "p50_ms": 4.964,
+     "p99_ms": 38.389
+    },
+    "acquire": {
+     "p50_ms": 0.008,
+     "p99_ms": 83.513
+    }
+   },
+   "probe_server_timing": {
+    "write": {
+     "p50_ms": 6.489,
+     "p99_ms": 118.551
+    },
+    "jdbc": {
+     "p50_ms": 4.991,
+     "p99_ms": 28.589
+    },
+    "acquire": {
+     "p50_ms": 0.007,
+     "p99_ms": 102.497
+    }
+   },
+   "cpu_mean_percent": 95.58,
+   "max_iowait_percent": 0.24,
+   "peak_consumer_lag": {
+    "cachepulse-cache-sync": 4,
+    "cachepulse-archive": 11,
+    "cachepulse-delivery": 28
+   }
+  },
+  {
+   "round": 2,
+   "delivery": "active",
+   "timing_mode": "auto",
+   "directory": "2-optimized",
+   "write_seconds": 20.007,
+   "updates_per_second": 449.832,
+   "successful_updates": 9000,
+   "cache_ms": {
+    "count": 782,
+    "p50_ms": 17.145,
+    "p95_ms": 29.949,
+    "p99_ms": 42.248,
+    "max_ms": 141.394
+   },
+   "writer_server_timing": {
+    "write": {
+     "p50_ms": 2.394,
+     "p99_ms": 14.527
+    },
+    "jdbc": {
+     "p50_ms": 2.14,
+     "p99_ms": 12.009
+    },
+    "acquire": {
+     "p50_ms": 0.003,
+     "p99_ms": 0.11
+    }
+   },
+   "probe_server_timing": {
+    "write": {
+     "p50_ms": 2.966,
+     "p99_ms": 13.346
+    },
+    "jdbc": {
+     "p50_ms": 2.727,
+     "p99_ms": 12.93
+    },
+    "acquire": {
+     "p50_ms": 0.003,
+     "p99_ms": 0.043
+    }
+   },
+   "cpu_mean_percent": 91.76,
+   "max_iowait_percent": 0.74,
+   "peak_consumer_lag": {
+    "cachepulse-cache-sync": 0,
+    "cachepulse-archive": 13,
+    "cachepulse-delivery": 13
+   }
+  },
+  {
+   "round": 3,
+   "delivery": "active",
+   "timing_mode": "auto",
+   "directory": "3-optimized",
+   "write_seconds": 20.003,
+   "updates_per_second": 449.724,
+   "successful_updates": 8996,
+   "cache_ms": {
+    "count": 832,
+    "p50_ms": 13.776,
+    "p95_ms": 31.26,
+    "p99_ms": 105.814,
+    "max_ms": 118.873
+   },
+   "writer_server_timing": {
+    "write": {
+     "p50_ms": 1.895,
+     "p99_ms": 90.135
+    },
+    "jdbc": {
+     "p50_ms": 1.69,
+     "p99_ms": 17.357
+    },
+    "acquire": {
+     "p50_ms": 0.003,
+     "p99_ms": 70.03
+    }
+   },
+   "probe_server_timing": {
+    "write": {
+     "p50_ms": 2.559,
+     "p99_ms": 89.096
+    },
+    "jdbc": {
+     "p50_ms": 2.299,
+     "p99_ms": 23.583
+    },
+    "acquire": {
+     "p50_ms": 0.003,
+     "p99_ms": 50.199
+    }
+   },
+   "cpu_mean_percent": 83.64,
+   "max_iowait_percent": 1.48,
+   "peak_consumer_lag": {
+    "cachepulse-cache-sync": 0,
+    "cachepulse-archive": 27,
+    "cachepulse-delivery": 6
+   }
+  },
+  {
+   "round": 4,
+   "delivery": "active",
+   "timing_mode": "auto",
+   "directory": "4-original",
+   "write_seconds": 20.007,
+   "updates_per_second": 449.838,
+   "successful_updates": 9000,
+   "cache_ms": {
+    "count": 791,
+    "p50_ms": 15.374,
+    "p95_ms": 28.339,
+    "p99_ms": 59.912,
+    "max_ms": 114.036
+   },
+   "writer_server_timing": {
+    "write": {
+     "p50_ms": 2.185,
+     "p99_ms": 67.937
+    },
+    "jdbc": {
+     "p50_ms": 1.957,
+     "p99_ms": 11.426
+    },
+    "acquire": {
+     "p50_ms": 0.003,
+     "p99_ms": 11.487
+    }
+   },
+   "probe_server_timing": {
+    "write": {
+     "p50_ms": 2.65,
+     "p99_ms": 43.214
+    },
+    "jdbc": {
+     "p50_ms": 2.417,
+     "p99_ms": 13.259
+    },
+    "acquire": {
+     "p50_ms": 0.003,
+     "p99_ms": 38.361
+    }
+   },
+   "cpu_mean_percent": 87.88,
+   "max_iowait_percent": 1.12,
+   "peak_consumer_lag": {
+    "cachepulse-cache-sync": 0,
+    "cachepulse-archive": 7,
+    "cachepulse-delivery": 9
+   }
+  }
+ ],
+ "cachepulse-delivery-sql-ab-20261125": [
+  {
+   "round": 1,
+   "delivery": "active",
+   "timing_mode": "auto",
+   "directory": "1-original",
+   "write_seconds": 20.047,
+   "updates_per_second": 514.848,
+   "successful_updates": 10321,
+   "cache_ms": {
+    "count": 243,
+    "p50_ms": 57.47,
+    "p95_ms": 469.679,
+    "p99_ms": 533.188,
+    "max_ms": 706.687
+   },
+   "writer_server_timing": {
+    "write": {
+     "p50_ms": 26.965,
+     "p99_ms": 464.07
+    },
+    "jdbc": {
+     "p50_ms": 8.063,
+     "p99_ms": 98.466
+    },
+    "acquire": {
+     "p50_ms": 3.121,
+     "p99_ms": 448.459
+    }
+   },
+   "probe_server_timing": {
+    "write": {
+     "p50_ms": 24.793,
+     "p99_ms": 498.747
+    },
+    "jdbc": {
+     "p50_ms": 7.715,
+     "p99_ms": 79.284
+    },
+    "acquire": {
+     "p50_ms": 8.86,
+     "p99_ms": 494.328
+    }
+   },
+   "cpu_mean_percent": 88.05,
+   "max_iowait_percent": 13.42,
+   "peak_consumer_lag": {
+    "cachepulse-cache-sync": 0,
+    "cachepulse-archive": 26,
+    "cachepulse-delivery": 38
+   }
+  },
+  {
+   "round": 2,
+   "delivery": "active",
+   "timing_mode": "auto",
+   "directory": "2-optimized",
+   "write_seconds": 20.03,
+   "updates_per_second": 787.825,
+   "successful_updates": 15780,
+   "cache_ms": {
+    "count": 422,
+    "p50_ms": 39.736,
+    "p95_ms": 137.954,
+    "p99_ms": 503.157,
+    "max_ms": 548.673
+   },
+   "writer_server_timing": {
+    "write": {
+     "p50_ms": 12.823,
+     "p99_ms": 446.732
+    },
+    "jdbc": {
+     "p50_ms": 6.101,
+     "p99_ms": 105.995
+    },
+    "acquire": {
+     "p50_ms": 0.019,
+     "p99_ms": 354.15
+    }
+   },
+   "probe_server_timing": {
+    "write": {
+     "p50_ms": 12.477,
+     "p99_ms": 486.78
+    },
+    "jdbc": {
+     "p50_ms": 5.707,
+     "p99_ms": 106.882
+    },
+    "acquire": {
+     "p50_ms": 0.676,
+     "p99_ms": 479.55
+    }
+   },
+   "cpu_mean_percent": 78.07,
+   "max_iowait_percent": 29.39,
+   "peak_consumer_lag": {
+    "cachepulse-cache-sync": 5,
+    "cachepulse-archive": 393,
+    "cachepulse-delivery": 205
+   }
+  },
+  {
+   "round": 3,
+   "delivery": "active",
+   "timing_mode": "auto",
+   "directory": "3-optimized",
+   "write_seconds": 20.027,
+   "updates_per_second": 781.055,
+   "successful_updates": 15642,
+   "cache_ms": {
+    "count": 438,
+    "p50_ms": 39.599,
+    "p95_ms": 137.997,
+    "p99_ms": 463.903,
+    "max_ms": 523.778
+   },
+   "writer_server_timing": {
+    "write": {
+     "p50_ms": 11.478,
+     "p99_ms": 442.213
+    },
+    "jdbc": {
+     "p50_ms": 6.001,
+     "p99_ms": 108.907
+    },
+    "acquire": {
+     "p50_ms": 0.013,
+     "p99_ms": 323.151
+    }
+   },
+   "probe_server_timing": {
+    "write": {
+     "p50_ms": 11.456,
+     "p99_ms": 437.662
+    },
+    "jdbc": {
+     "p50_ms": 5.855,
+     "p99_ms": 30.069
+    },
+    "acquire": {
+     "p50_ms": 0.012,
+     "p99_ms": 430.137
+    }
+   },
+   "cpu_mean_percent": 76.81,
+   "max_iowait_percent": 26.24,
+   "peak_consumer_lag": {
+    "cachepulse-cache-sync": 4,
+    "cachepulse-archive": 263,
+    "cachepulse-delivery": 63
+   }
+  },
+  {
+   "round": 4,
+   "delivery": "active",
+   "timing_mode": "auto",
+   "directory": "4-original",
+   "write_seconds": 20.126,
+   "updates_per_second": 768.15,
+   "successful_updates": 15460,
+   "cache_ms": {
+    "count": 415,
+    "p50_ms": 41.139,
+    "p95_ms": 162.066,
+    "p99_ms": 568.594,
+    "max_ms": 578.661
+   },
+   "writer_server_timing": {
+    "write": {
+     "p50_ms": 11.821,
+     "p99_ms": 541.279
+    },
+    "jdbc": {
+     "p50_ms": 5.959,
+     "p99_ms": 104.697
+    },
+    "acquire": {
+     "p50_ms": 0.016,
+     "p99_ms": 491.798
+    }
+   },
+   "probe_server_timing": {
+    "write": {
+     "p50_ms": 12.064,
+     "p99_ms": 545.238
+    },
+    "jdbc": {
+     "p50_ms": 5.573,
+     "p99_ms": 21.902
+    },
+    "acquire": {
+     "p50_ms": 0.511,
+     "p99_ms": 541.658
+    }
+   },
+   "cpu_mean_percent": 75.86,
+   "max_iowait_percent": 23.9,
+   "peak_consumer_lag": {
+    "cachepulse-cache-sync": 9,
+    "cachepulse-archive": 436,
+    "cachepulse-delivery": 1269
+   }
+  }
+ ],
+ "cachepulse-disk-canary-20261125": [
+  {
+   "round": 1,
+   "pool_size": 10,
+   "delivery": "active",
+   "timing_mode": "auto",
+   "phase": "warmup",
+   "target_rate": 550,
+   "directory": "1-warmup",
+   "write_seconds": 15.017,
+   "updates_per_second": 514.217,
+   "successful_updates": 7722,
+   "cache_ms": {
+    "count": 305,
+    "p50_ms": 40.612,
+    "p95_ms": 118.484,
+    "p99_ms": 163.327,
+    "max_ms": 190.199
+   },
+   "writer_server_timing": {
+    "write": {
+     "p50_ms": 17.256,
+     "p99_ms": 129.243
+    },
+    "jdbc": {
+     "p50_ms": 7.504,
+     "p99_ms": 51.315
+    },
+    "acquire": {
+     "p50_ms": 0.016,
+     "p99_ms": 108.84
+    },
+    "hold": {
+     "p50_ms": 12.076,
+     "p99_ms": 92.912
+    }
+   },
+   "probe_server_timing": {
+    "write": {
+     "p50_ms": 16.253,
+     "p99_ms": 140.63
+    },
+    "jdbc": {
+     "p50_ms": 6.627,
+     "p99_ms": 54.673
+    },
+    "acquire": {
+     "p50_ms": 0.015,
+     "p99_ms": 132.419
+    },
+    "hold": {
+     "p50_ms": 11.456,
+     "p99_ms": 90.227
+    }
+   },
+   "cpu_mean_percent": 95.9,
+   "max_iowait_percent": 0.24,
+   "peak_consumer_lag": {
+    "cachepulse-cache-sync": 0,
+    "cachepulse-archive": 22,
+    "cachepulse-delivery": 18
+   }
+  },
+  {
+   "round": 2,
+   "pool_size": 10,
+   "delivery": "active",
+   "timing_mode": "auto",
+   "phase": "target-800",
+   "target_rate": 800,
+   "directory": "2-target-800",
+   "write_seconds": 50.115,
+   "updates_per_second": 765.327,
+   "successful_updates": 38354,
+   "cache_ms": {
+    "count": 1512,
+    "p50_ms": 31.18,
+    "p95_ms": 80.026,
+    "p99_ms": 124.312,
+    "max_ms": 144.66
+   },
+   "writer_server_timing": {
+    "write": {
+     "p50_ms": 7.618,
+     "p99_ms": 101.211
+    },
+    "jdbc": {
+     "p50_ms": 5.3,
+     "p99_ms": 30.148
+    },
+    "acquire": {
+     "p50_ms": 0.004,
+     "p99_ms": 85.214
+    },
+    "hold": {
+     "p50_ms": 6.245,
+     "p99_ms": 42.564
+    }
+   },
+   "probe_server_timing": {
+    "write": {
+     "p50_ms": 7.381,
+     "p99_ms": 101.847
+    },
+    "jdbc": {
+     "p50_ms": 5.138,
+     "p99_ms": 30.954
+    },
+    "acquire": {
+     "p50_ms": 0.004,
+     "p99_ms": 93.718
+    },
+    "hold": {
+     "p50_ms": 5.922,
+     "p99_ms": 39.527
+    }
+   },
+   "cpu_mean_percent": 91.32,
+   "max_iowait_percent": 1.49,
+   "peak_consumer_lag": {
+    "cachepulse-cache-sync": 3,
+    "cachepulse-archive": 166,
+    "cachepulse-delivery": 184
+   }
+  },
+  {
+   "round": 3,
+   "pool_size": 10,
+   "delivery": "active",
+   "timing_mode": "auto",
+   "phase": "max-load",
+   "target_rate": 0,
+   "directory": "3-max-load",
+   "write_seconds": 25.038,
+   "updates_per_second": 929.219,
+   "successful_updates": 23266,
+   "cache_ms": {
+    "count": 589,
+    "p50_ms": 47.173,
+    "p95_ms": 117.793,
+    "p99_ms": 183.084,
+    "max_ms": 297.191
+   },
+   "writer_server_timing": {
+    "write": {
+     "p50_ms": 13.779,
+     "p99_ms": 113.221
+    },
+    "jdbc": {
+     "p50_ms": 6.433,
+     "p99_ms": 30.15
+    },
+    "acquire": {
+     "p50_ms": 0.826,
+     "p99_ms": 97.554
+    },
+    "hold": {
+     "p50_ms": 7.383,
+     "p99_ms": 38.309
+    }
+   },
+   "probe_server_timing": {
+    "write": {
+     "p50_ms": 13.656,
+     "p99_ms": 138.715
+    },
+    "jdbc": {
+     "p50_ms": 6.361,
+     "p99_ms": 29.929
+    },
+    "acquire": {
+     "p50_ms": 0.132,
+     "p99_ms": 120.736
+    },
+    "hold": {
+     "p50_ms": 7.276,
+     "p99_ms": 43.706
+    }
+   },
+   "cpu_mean_percent": 89.83,
+   "max_iowait_percent": 20.68,
+   "peak_consumer_lag": {
+    "cachepulse-cache-sync": 10,
+    "cachepulse-archive": 1135,
+    "cachepulse-delivery": 698
+   }
+  }
+ ],
+ "cachepulse-mysql-wait-20261125": [
+  {
+   "round": 1,
+   "pool_size": 10,
+   "delivery": "active",
+   "timing_mode": "auto",
+   "phase": "warmup",
+   "target_rate": 550,
+   "directory": "1-warmup",
+   "write_seconds": 25.013,
+   "updates_per_second": 460.123,
+   "successful_updates": 11509,
+   "cache_ms": {
+    "count": 464,
+    "p50_ms": 38.775,
+    "p95_ms": 139.35,
+    "p99_ms": 563.77,
+    "max_ms": 610.501
+   },
+   "writer_server_timing": {
+    "write": {
+     "p50_ms": 17.558,
+     "p99_ms": 433.408
+    },
+    "jdbc": {
+     "p50_ms": 7.489,
+     "p99_ms": 89.211
+    },
+    "acquire": {
+     "p50_ms": 0.019,
+     "p99_ms": 170.76
+    },
+    "hold": {
+     "p50_ms": 11.09,
+     "p99_ms": 102.677
+    }
+   },
+   "probe_server_timing": {
+    "write": {
+     "p50_ms": 12.52,
+     "p99_ms": 548.31
+    },
+    "jdbc": {
+     "p50_ms": 6.258,
+     "p99_ms": 45.835
+    },
+    "acquire": {
+     "p50_ms": 0.012,
+     "p99_ms": 528.326
+    },
+    "hold": {
+     "p50_ms": 9.162,
+     "p99_ms": 76.018
+    }
+   },
+   "cpu_mean_percent": 88.87,
+   "max_iowait_percent": 31.23,
+   "peak_consumer_lag": {
+    "cachepulse-cache-sync": 1,
+    "cachepulse-archive": 29,
+    "cachepulse-delivery": 35
+   }
+  },
+  {
+   "round": 2,
+   "pool_size": 10,
+   "delivery": "active",
+   "timing_mode": "auto",
+   "phase": "target-800",
+   "target_rate": 800,
+   "directory": "2-target-800",
+   "write_seconds": 75.014,
+   "updates_per_second": 689.935,
+   "successful_updates": 51755,
+   "cache_ms": {
+    "count": 2228,
+    "p50_ms": 23.514,
+    "p95_ms": 85.508,
+    "p99_ms": 570.265,
+    "max_ms": 613.121
+   },
+   "writer_server_timing": {
+    "write": {
+     "p50_ms": 5.13,
+     "p99_ms": 369.927
+    },
+    "jdbc": {
+     "p50_ms": 4.199,
+     "p99_ms": 38.069
+    },
+    "acquire": {
+     "p50_ms": 0.003,
+     "p99_ms": 101.224
+    },
+    "hold": {
+     "p50_ms": 4.649,
+     "p99_ms": 59.018
+    }
+   },
+   "probe_server_timing": {
+    "write": {
+     "p50_ms": 5.409,
+     "p99_ms": 559.393
+    },
+    "jdbc": {
+     "p50_ms": 4.534,
+     "p99_ms": 25.659
+    },
+    "acquire": {
+     "p50_ms": 0.003,
+     "p99_ms": 550.615
+    },
+    "hold": {
+     "p50_ms": 4.915,
+     "p99_ms": 28.684
+    }
+   },
+   "cpu_mean_percent": 80.32,
+   "max_iowait_percent": 38.03,
+   "peak_consumer_lag": {
+    "cachepulse-cache-sync": 8,
+    "cachepulse-archive": 149,
+    "cachepulse-delivery": 115
+   }
+  }
+ ],
+ "cachepulse-write-diagnosis-20261125": [
+  {
+   "round": 1,
+   "delivery": "active",
+   "timing_mode": "auto",
+   "directory": "1-auto-active",
+   "write_seconds": 20.052,
+   "updates_per_second": 440.905,
+   "successful_updates": 8841,
+   "cache_ms": {
+    "count": 237,
+    "p50_ms": 67.649,
+    "p95_ms": 198.464,
+    "p99_ms": 240.272,
+    "max_ms": 427.725
+   },
+   "writer_server_timing": {
+    "write": {
+     "p50_ms": 37.723,
+     "p99_ms": 199.327
+    },
+    "jdbc": {
+     "p50_ms": 11.931,
+     "p99_ms": 86.561
+    },
+    "acquire": {
+     "p50_ms": 9.867,
+     "p99_ms": 174.551
+    }
+   },
+   "probe_server_timing": {
+    "write": {
+     "p50_ms": 36.862,
+     "p99_ms": 208.464
+    },
+    "jdbc": {
+     "p50_ms": 10.63,
+     "p99_ms": 74.017
+    },
+    "acquire": {
+     "p50_ms": 13.536,
+     "p99_ms": 178.326
+    }
+   },
+   "cpu_mean_percent": 92.55,
+   "max_iowait_percent": 15.38,
+   "peak_consumer_lag": {
+    "cachepulse-cache-sync": 1,
+    "cachepulse-archive": 44,
+    "cachepulse-delivery": 44
+   }
+  },
+  {
+   "round": 2,
+   "delivery": "paused",
+   "timing_mode": "auto",
+   "directory": "2-auto-paused",
+   "write_seconds": 20.033,
+   "updates_per_second": 885.567,
+   "successful_updates": 17741,
+   "cache_ms": {
+    "count": 467,
+    "p50_ms": 44.013,
+    "p95_ms": 109.045,
+    "p99_ms": 151.109,
+    "max_ms": 217.14
+   },
+   "writer_server_timing": {
+    "write": {
+     "p50_ms": 12.678,
+     "p99_ms": 105.761
+    },
+    "jdbc": {
+     "p50_ms": 5.906,
+     "p99_ms": 49.377
+    },
+    "acquire": {
+     "p50_ms": 0.014,
+     "p99_ms": 95.717
+    }
+   },
+   "probe_server_timing": {
+    "write": {
+     "p50_ms": 12.739,
+     "p99_ms": 116.452
+    },
+    "jdbc": {
+     "p50_ms": 5.445,
+     "p99_ms": 37.622
+    },
+    "acquire": {
+     "p50_ms": 0.014,
+     "p99_ms": 108.664
+    }
+   },
+   "cpu_mean_percent": 88.68,
+   "max_iowait_percent": 2.94,
+   "peak_consumer_lag": {
+    "cachepulse-cache-sync": 6,
+    "cachepulse-archive": 51,
+    "cachepulse-delivery": 8530
+   }
+  },
+  {
+   "round": 3,
+   "delivery": "paused",
+   "timing_mode": "auto",
+   "directory": "3-auto-paused",
+   "write_seconds": 20.059,
+   "updates_per_second": 865.408,
+   "successful_updates": 17359,
+   "cache_ms": {
+    "count": 507,
+    "p50_ms": 42.696,
+    "p95_ms": 98.98,
+    "p99_ms": 135.694,
+    "max_ms": 170.779
+   },
+   "writer_server_timing": {
+    "write": {
+     "p50_ms": 12.755,
+     "p99_ms": 105.383
+    },
+    "jdbc": {
+     "p50_ms": 6.327,
+     "p99_ms": 36.551
+    },
+    "acquire": {
+     "p50_ms": 0.013,
+     "p99_ms": 90.267
+    }
+   },
+   "probe_server_timing": {
+    "write": {
+     "p50_ms": 12.645,
+     "p99_ms": 105.734
+    },
+    "jdbc": {
+     "p50_ms": 6.04,
+     "p99_ms": 72.353
+    },
+    "acquire": {
+     "p50_ms": 0.012,
+     "p99_ms": 88.691
+    }
+   },
+   "cpu_mean_percent": 87.27,
+   "max_iowait_percent": 3.8,
+   "peak_consumer_lag": {
+    "cachepulse-cache-sync": 5,
+    "cachepulse-archive": 191,
+    "cachepulse-delivery": 8488
+   }
+  },
+  {
+   "round": 4,
+   "delivery": "active",
+   "timing_mode": "auto",
+   "directory": "4-auto-active",
+   "write_seconds": 20.126,
+   "updates_per_second": 775.068,
+   "successful_updates": 15599,
+   "cache_ms": {
+    "count": 436,
+    "p50_ms": 55.058,
+    "p95_ms": 138.496,
+    "p99_ms": 171.487,
+    "max_ms": 193.888
+   },
+   "writer_server_timing": {
+    "write": {
+     "p50_ms": 17.864,
+     "p99_ms": 119.82
+    },
+    "jdbc": {
+     "p50_ms": 8.036,
+     "p99_ms": 49.636
+    },
+    "acquire": {
+     "p50_ms": 2.386,
+     "p99_ms": 102.764
+    }
+   },
+   "probe_server_timing": {
+    "write": {
+     "p50_ms": 17.475,
+     "p99_ms": 133.662
+    },
+    "jdbc": {
+     "p50_ms": 8.121,
+     "p99_ms": 36.341
+    },
+    "acquire": {
+     "p50_ms": 3.724,
+     "p99_ms": 122.604
+    }
+   },
+   "cpu_mean_percent": 88.36,
+   "max_iowait_percent": 3.39,
+   "peak_consumer_lag": {
+    "cachepulse-cache-sync": 10,
+    "cachepulse-archive": 363,
+    "cachepulse-delivery": 226
+   }
+  },
+  {
+   "round": 5,
+   "delivery": "active",
+   "timing_mode": "explicit",
+   "directory": "5-explicit-active",
+   "write_seconds": 20.043,
+   "updates_per_second": 658.075,
+   "successful_updates": 13190,
+   "cache_ms": {
+    "count": 411,
+    "p50_ms": 58.452,
+    "p95_ms": 124.424,
+    "p99_ms": 166.859,
+    "max_ms": 230.461
+   },
+   "writer_server_timing": {
+    "write": {
+     "p50_ms": 28.942,
+     "p99_ms": 132.848
+    },
+    "jdbc": {
+     "p50_ms": 1.833,
+     "p99_ms": 18.243
+    },
+    "begin": {
+     "p50_ms": 17.219,
+     "p99_ms": 117.13
+    },
+    "commit": {
+     "p50_ms": 4.724,
+     "p99_ms": 27.492
+    }
+   },
+   "probe_server_timing": {
+    "write": {
+     "p50_ms": 27.829,
+     "p99_ms": 135.968
+    },
+    "jdbc": {
+     "p50_ms": 1.806,
+     "p99_ms": 17.084
+    },
+    "begin": {
+     "p50_ms": 16.899,
+     "p99_ms": 103.724
+    },
+    "commit": {
+     "p50_ms": 4.916,
+     "p99_ms": 23.489
+    }
+   },
+   "cpu_mean_percent": 90.5,
+   "max_iowait_percent": 4.23,
+   "peak_consumer_lag": {
+    "cachepulse-cache-sync": 2,
+    "cachepulse-archive": 137,
+    "cachepulse-delivery": 272
+   }
+  },
+  {
+   "round": 6,
+   "delivery": "paused",
+   "timing_mode": "explicit",
+   "directory": "6-explicit-paused",
+   "write_seconds": 20.067,
+   "updates_per_second": 785.976,
+   "successful_updates": 15772,
+   "cache_ms": {
+    "count": 468,
+    "p50_ms": 48.34,
+    "p95_ms": 113.216,
+    "p99_ms": 142.279,
+    "max_ms": 170.73
+   },
+   "writer_server_timing": {
+    "write": {
+     "p50_ms": 18.351,
+     "p99_ms": 112.686
+    },
+    "jdbc": {
+     "p50_ms": 1.342,
+     "p99_ms": 15.326
+    },
+    "begin": {
+     "p50_ms": 7.099,
+     "p99_ms": 99.766
+    },
+    "commit": {
+     "p50_ms": 3.716,
+     "p99_ms": 30.328
+    }
+   },
+   "probe_server_timing": {
+    "write": {
+     "p50_ms": 18.233,
+     "p99_ms": 117.162
+    },
+    "jdbc": {
+     "p50_ms": 1.204,
+     "p99_ms": 15.578
+    },
+    "begin": {
+     "p50_ms": 7.924,
+     "p99_ms": 104.312
+    },
+    "commit": {
+     "p50_ms": 3.608,
+     "p99_ms": 74.99
+    }
+   },
+   "cpu_mean_percent": 86.97,
+   "max_iowait_percent": 3.95,
+   "peak_consumer_lag": {
+    "cachepulse-cache-sync": 6,
+    "cachepulse-archive": 64,
+    "cachepulse-delivery": 7865
+   }
+  }
+ ]
+}

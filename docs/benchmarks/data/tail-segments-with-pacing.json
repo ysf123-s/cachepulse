@@ -1,0 +1,214 @@
+{
+  "wire_capture": {
+    "captured_packets": 22973,
+    "dropped_packets": 0,
+    "matching_tcp_packets": {
+      "mysql_to_canal": 11064,
+      "canal_to_kafka": 1879
+    }
+  },
+  "writer_rps": 502.228,
+  "cache": {
+    "count": 238,
+    "mean_ms": 87.567,
+    "p50_ms": 62.573,
+    "p95_ms": 296.332,
+    "p99_ms": 463.833,
+    "max_ms": 466.631
+  },
+  "coverage": {
+    "eligible": 238,
+    "matched": 238,
+    "binlog_found": 238,
+    "parsed_found": 238,
+    "producer_found": 238
+  },
+  "timings_ms": {
+    "total": {
+      "p50": 62.18,
+      "p95": 296.33,
+      "p99": 463.83,
+      "worst_2pct_mean": 462.3
+    },
+    "write": {
+      "p50": 43.46,
+      "p95": 284.99,
+      "p99": 432.9,
+      "worst_2pct_mean": 432.78
+    },
+    "acquire": {
+      "p50": 0.15,
+      "p95": 273.04,
+      "p99": 391.82,
+      "worst_2pct_mean": 393.79
+    },
+    "jdbc": {
+      "p50": 7.72,
+      "p95": 35.64,
+      "p99": 169.77,
+      "worst_2pct_mean": 9.01
+    },
+    "write_to_binlog_on_wire": {
+      "p50": -5.65,
+      "p95": -0.53,
+      "p99": 1.1,
+      "worst_2pct_mean": -6.24
+    },
+    "binlog_on_wire_to_record_created": {
+      "p50": 17.33,
+      "p95": 55.97,
+      "p99": 67.92,
+      "worst_2pct_mean": 23.22
+    },
+    "record_created_to_produce_on_wire": {
+      "p50": 0.94,
+      "p95": 8.63,
+      "p99": 13.12,
+      "worst_2pct_mean": 0.69
+    },
+    "binlog_on_wire_to_produce_on_wire": {
+      "p50": 18.68,
+      "p95": 56.91,
+      "p99": 71.51,
+      "worst_2pct_mean": 23.91
+    },
+    "produce_on_wire_to_cache_gone": {
+      "p50": 8.34,
+      "p95": 16.67,
+      "p99": 23.73,
+      "worst_2pct_mean": 11.85
+    },
+    "binlog_on_wire_to_parse_done": {
+      "p50": 8.75,
+      "p95": 39.62,
+      "p99": 53.66,
+      "worst_2pct_mean": 14.62
+    },
+    "parse_done_to_record_created": {
+      "p50": 5.0,
+      "p95": 26.0,
+      "p99": 52.0,
+      "worst_2pct_mean": 8.6
+    },
+    "parse_done_to_produce_on_wire": {
+      "p50": 6.75,
+      "p95": 29.45,
+      "p99": 52.52,
+      "worst_2pct_mean": 9.29
+    }
+  },
+  "worst_2pct": [
+    {
+      "code": "cdc-load-ef8454f0-w02-000027",
+      "second": 0.71438623046875,
+      "total": 456.45,
+      "write": 411.955,
+      "acquire": 391.822,
+      "jdbc": 2.393,
+      "write_to_binlog_on_wire": -1.37109375,
+      "binlog_on_wire_to_record_created": 33.176025390625,
+      "record_created_to_produce_on_wire": 1.134033203125,
+      "binlog_on_wire_to_produce_on_wire": 34.31005859375,
+      "produce_on_wire_to_cache_gone": 11.555908203125,
+      "binlog_on_wire_to_parse_done": 4.176025390625,
+      "parse_done_to_record_created": 29.0,
+      "parse_done_to_produce_on_wire": 30.134033203125
+    },
+    {
+      "code": "cdc-load-ef8454f0-w01-000055",
+      "second": 7.697191162109375,
+      "total": 458.991,
+      "write": 429.328,
+      "acquire": 412.437,
+      "jdbc": 7.54,
+      "write_to_binlog_on_wire": -9.041748046875,
+      "binlog_on_wire_to_record_created": 23.6689453125,
+      "record_created_to_produce_on_wire": 0.6630859375,
+      "binlog_on_wire_to_produce_on_wire": 24.33203125,
+      "produce_on_wire_to_cache_gone": 14.372802734375,
+      "binlog_on_wire_to_parse_done": 21.6689453125,
+      "parse_done_to_record_created": 2.0,
+      "parse_done_to_produce_on_wire": 2.6630859375
+    },
+    {
+      "code": "cdc-load-ef8454f0-w02-000057",
+      "second": 7.692350341796875,
+      "total": 463.833,
+      "write": 432.897,
+      "acquire": 419.958,
+      "jdbc": 6.428,
+      "write_to_binlog_on_wire": -6.291015625,
+      "binlog_on_wire_to_record_created": 22.18994140625,
+      "record_created_to_produce_on_wire": 0.6630859375,
+      "binlog_on_wire_to_produce_on_wire": 22.85302734375,
+      "produce_on_wire_to_cache_gone": 14.3740234375,
+      "binlog_on_wire_to_parse_done": 20.18994140625,
+      "parse_done_to_record_created": 2.0,
+      "parse_done_to_produce_on_wire": 2.6630859375
+    },
+    {
+      "code": "cdc-load-ef8454f0-w00-000055",
+      "second": 7.63005029296875,
+      "total": 465.579,
+      "write": 443.556,
+      "acquire": 369.576,
+      "jdbc": 9.27,
+      "write_to_binlog_on_wire": -3.471923828125,
+      "binlog_on_wire_to_record_created": 17.011962890625,
+      "record_created_to_produce_on_wire": 0.14306640625,
+      "binlog_on_wire_to_produce_on_wire": 17.155029296875,
+      "produce_on_wire_to_cache_gone": 8.340087890625,
+      "binlog_on_wire_to_parse_done": 11.011962890625,
+      "parse_done_to_record_created": 6.0,
+      "parse_done_to_produce_on_wire": 6.14306640625
+    },
+    {
+      "code": "cdc-load-ef8454f0-w02-000082",
+      "second": 13.4549482421875,
+      "total": 466.631,
+      "write": 446.172,
+      "acquire": 375.166,
+      "jdbc": 19.416,
+      "write_to_binlog_on_wire": -11.0322265625,
+      "binlog_on_wire_to_record_created": 20.05810546875,
+      "record_created_to_produce_on_wire": 0.826904296875,
+      "binlog_on_wire_to_produce_on_wire": 20.885009765625,
+      "produce_on_wire_to_cache_gone": 10.606201171875,
+      "binlog_on_wire_to_parse_done": 16.05810546875,
+      "parse_done_to_record_created": 4.0,
+      "parse_done_to_produce_on_wire": 4.826904296875
+    }
+  ],
+  "resources": {
+    "samples": 8,
+    "cpu_mean_percent": 93.0,
+    "cpu_max_percent": 99.02,
+    "min_available_memory_mib": 1725.7,
+    "mean_iowait_percent": 3.82,
+    "max_iowait_percent": 9.33,
+    "pool_pending_max": 25.0,
+    "peak_consumer_lag": {
+      "cachepulse-cache-sync": 1,
+      "cachepulse-archive": 375,
+      "cachepulse-delivery": 190
+    },
+    "container_peak_memory_mib": {
+      "cp-demo-user-background-pace": 428.22,
+      "cp-demo-user-service": 419.36,
+      "cp-cache-sync-service": 507.62,
+      "cp-archive-service": 335.59,
+      "cp-delivery-service": 334.53,
+      "canal-server": 363.33,
+      "kafka": 451.45,
+      "mysql": 692.39,
+      "redis": 6.14,
+      "research-postgres": 138.89
+    }
+  },
+  "postcheck": {
+    "services_restored": true,
+    "diagnostic_instance_removed": true,
+    "cache_freshness": "FRESH",
+    "loss_detection": "ON"
+  }
+}

@@ -1,0 +1,258 @@
+{
+  "rounds": [
+    {
+      "round": 1,
+      "variant": "monolith",
+      "started_at": "2026-11-25T17:18:23.172709+08:00",
+      "finished_at": "2026-11-25T17:19:12.321082+08:00",
+      "reference": {
+        "throughput": 25.104,
+        "p50_ms": 94.953,
+        "p99_ms": 309.407,
+        "samples": 300
+      },
+      "high": {
+        "throughput": 799.18,
+        "p50_ms": 126.766,
+        "p99_ms": 293.945,
+        "samples": 279,
+        "writes": 16007,
+        "seconds": 20.029
+      },
+      "app_jar_sha256": "4120f877ed42a5fc58c300ee2c60752319c3fb79fe793c3475807210ee184fac"
+    },
+    {
+      "round": 2,
+      "variant": "cachepulse",
+      "started_at": "2026-11-25T17:19:47.595295+08:00",
+      "finished_at": "2026-11-25T17:20:34.719042+08:00",
+      "reference": {
+        "throughput": 26.804,
+        "p50_ms": 96.157,
+        "p99_ms": 112.598,
+        "samples": 300
+      },
+      "high": {
+        "throughput": 487.614,
+        "p50_ms": 118.528,
+        "p99_ms": 538.686,
+        "samples": 204,
+        "writes": 9785,
+        "seconds": 20.067
+      },
+      "app_jar_sha256": "6c67353d357da77dd551c6f82f95b6746ce37f7c8b747efd13e458a6d4953461"
+    },
+    {
+      "round": 3,
+      "variant": "monolith",
+      "started_at": "2026-11-25T17:20:44.917187+08:00",
+      "finished_at": "2026-11-25T17:21:33.562516+08:00",
+      "reference": {
+        "throughput": 26.713,
+        "p50_ms": 97.342,
+        "p99_ms": 115.938,
+        "samples": 300
+      },
+      "high": {
+        "throughput": 979.609,
+        "p50_ms": 125.298,
+        "p99_ms": 314.288,
+        "samples": 307,
+        "writes": 19629,
+        "seconds": 20.038
+      },
+      "app_jar_sha256": "4120f877ed42a5fc58c300ee2c60752319c3fb79fe793c3475807210ee184fac"
+    },
+    {
+      "round": 4,
+      "variant": "cachepulse",
+      "started_at": "2026-11-25T17:22:07.090896+08:00",
+      "finished_at": "2026-11-25T17:22:53.962224+08:00",
+      "reference": {
+        "throughput": 26.737,
+        "p50_ms": 97.761,
+        "p99_ms": 113.495,
+        "samples": 300
+      },
+      "high": {
+        "throughput": 754.675,
+        "p50_ms": 109.05,
+        "p99_ms": 433.355,
+        "samples": 254,
+        "writes": 15177,
+        "seconds": 20.111
+      },
+      "app_jar_sha256": "6c67353d357da77dd551c6f82f95b6746ce37f7c8b747efd13e458a6d4953461"
+    },
+    {
+      "round": 5,
+      "variant": "monolith",
+      "started_at": "2026-11-25T17:23:03.946763+08:00",
+      "finished_at": "2026-11-25T17:23:52.398111+08:00",
+      "reference": {
+        "throughput": 25.668,
+        "p50_ms": 92.734,
+        "p99_ms": 207.731,
+        "samples": 300
+      },
+      "high": {
+        "throughput": 945.185,
+        "p50_ms": 118.813,
+        "p99_ms": 574.784,
+        "samples": 303,
+        "writes": 19107,
+        "seconds": 20.215
+      },
+      "app_jar_sha256": "4120f877ed42a5fc58c300ee2c60752319c3fb79fe793c3475807210ee184fac"
+    },
+    {
+      "round": 6,
+      "variant": "cachepulse",
+      "started_at": "2026-11-25T17:24:20.006862+08:00",
+      "finished_at": "2026-11-25T17:25:06.855296+08:00",
+      "reference": {
+        "throughput": 26.826,
+        "p50_ms": 95.921,
+        "p99_ms": 110.804,
+        "samples": 300
+      },
+      "high": {
+        "throughput": 843.551,
+        "p50_ms": 99.712,
+        "p99_ms": 225.748,
+        "samples": 300,
+        "writes": 16904,
+        "seconds": 20.039
+      },
+      "app_jar_sha256": "6c67353d357da77dd551c6f82f95b6746ce37f7c8b747efd13e458a6d4953461"
+    }
+  ],
+  "ranges": {
+    "monolith": {
+      "reference": {
+        "throughput": {
+          "min": 25.104,
+          "median": 25.668,
+          "max": 26.713
+        },
+        "p50_ms": {
+          "min": 92.734,
+          "median": 94.953,
+          "max": 97.342
+        },
+        "p99_ms": {
+          "min": 115.938,
+          "median": 207.731,
+          "max": 309.407
+        }
+      },
+      "high": {
+        "throughput": {
+          "min": 799.18,
+          "median": 945.185,
+          "max": 979.609
+        },
+        "p50_ms": {
+          "min": 118.813,
+          "median": 125.298,
+          "max": 126.766
+        },
+        "p99_ms": {
+          "min": 293.945,
+          "median": 314.288,
+          "max": 574.784
+        }
+      }
+    },
+    "cachepulse": {
+      "reference": {
+        "throughput": {
+          "min": 26.737,
+          "median": 26.804,
+          "max": 26.826
+        },
+        "p50_ms": {
+          "min": 95.921,
+          "median": 96.157,
+          "max": 97.761
+        },
+        "p99_ms": {
+          "min": 110.804,
+          "median": 112.598,
+          "max": 113.495
+        }
+      },
+      "high": {
+        "throughput": {
+          "min": 487.614,
+          "median": 754.675,
+          "max": 843.551
+        },
+        "p50_ms": {
+          "min": 99.712,
+          "median": 109.05,
+          "max": 118.528
+        },
+        "p99_ms": {
+          "min": 225.748,
+          "median": 433.355,
+          "max": 538.686
+        }
+      }
+    }
+  },
+  "paired_percent_change": [
+    {
+      "pair": 1,
+      "reference": {
+        "throughput": 6.772,
+        "p50_ms": 1.268,
+        "p99_ms": -63.608
+      },
+      "high": {
+        "throughput": -38.986,
+        "p50_ms": -6.499,
+        "p99_ms": 83.261
+      }
+    },
+    {
+      "pair": 2,
+      "reference": {
+        "throughput": 0.09,
+        "p50_ms": 0.43,
+        "p99_ms": -2.107
+      },
+      "high": {
+        "throughput": -22.962,
+        "p50_ms": -12.967,
+        "p99_ms": 37.885
+      }
+    },
+    {
+      "pair": 3,
+      "reference": {
+        "throughput": 4.511,
+        "p50_ms": 3.437,
+        "p99_ms": -46.66
+      },
+      "high": {
+        "throughput": -10.753,
+        "p50_ms": -16.077,
+        "p99_ms": -60.725
+      }
+    }
+  ],
+  "experiment": {
+    "started_at": "2026-11-25T17:18:07.495332+08:00",
+    "finished_at": "2026-11-25T17:25:07.652175+08:00",
+    "recovery": {
+      "stop_temporary_container": true,
+      "start_cachepulse": true,
+      "cachepulse_ready": true,
+      "temporary_user_dropped": true,
+      "legacy_archived_rows": 57584,
+      "temporary_schema_dropped": true,
+      "isolated_redis_keys_remaining": 0
+    }
+  }
+}

@@ -1,0 +1,26 @@
+{
+  "monolith_20261114": {
+    "closed_tps": 24.096,
+    "closed_p99_ms": 152.043,
+    "write_tps": 741.638,
+    "write_p99_ms": 278.758,
+    "write_count": 14858,
+    "probe_count": 303
+  },
+  "monolith_20261119": {
+    "closed_tps": 21.518,
+    "closed_p99_ms": 228.253,
+    "write_tps": 696.649,
+    "write_p99_ms": 351.812,
+    "write_count": 13977,
+    "probe_count": 264
+  },
+  "cachepulse_20261125": {
+    "closed_tps": 26.722,
+    "closed_p99_ms": 114.175,
+    "write_tps": 732.385,
+    "write_p99_ms": 255.529,
+    "write_count": 14685,
+    "probe_count": 280
+  }
+}
