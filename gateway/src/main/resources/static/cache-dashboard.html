@@ -32,8 +32,9 @@
   <link rel="stylesheet" href="dashboard-ui.css">
 </head>
 <body>
+<nav class="topbar"><div class="topbar-inner"><a class="brand" href="index.html"><span class="brand-mark">CP</span>CachePulse</a>
+  <div class="topbar-links"><a href="index.html">微服务总览</a><a class="active" href="cache-dashboard.html" aria-current="page">缓存同步</a><a href="platform-dashboard.html">数据变更平台</a></div></div></nav>
 <main>
-  <nav style="margin-bottom:16px;"><a href="platform-dashboard.html" style="color:#245dc1;font-weight:600;text-decoration:none;">→ 切换至 数据库变更处理平台控制台</a></nav>
   <header><div><h1>缓存同步控制台</h1><p>查看缓存使用情况，查询业务数据，维护指定缓存。</p></div><span class="muted" id="updated">正在连接…</span></header>
   <div id="notice" role="status" aria-live="polite">正在读取运行状态。</div>
   <details id="errorTechnical" class="technical" hidden><summary>错误技术详情</summary><pre id="errorRaw"></pre></details>

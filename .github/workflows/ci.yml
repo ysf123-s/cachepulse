@@ -65,6 +65,7 @@ jobs:
         run: |
           node src/test/js/cache-dashboard.test.cjs
           node src/test/js/platform-dashboard.test.cjs
+          node src/test/js/overview.test.cjs
 
       - name: Upload test reports
         if: always()

@@ -3,17 +3,319 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>CachePulse</title>
+  <title>CachePulse · 微服务总览</title>
+  <style>
+    :root{font-family:"Microsoft YaHei",system-ui,sans-serif;font-size:14px}
+    *{box-sizing:border-box}body{margin:0}main{max-width:1200px;margin:auto;padding:28px 20px 48px}
+    h1{font-size:30px;line-height:1.3;margin:6px 0 10px}h2{font-size:17px;margin:0}h3{font-size:15px;margin:0}
+    p{line-height:1.7;margin:4px 0;color:#64748b}.muted{font-size:12px;color:#64748b}
+    section{background:#fff;border:1px solid #e2e8f0;border-radius:14px;padding:22px;margin-bottom:20px}
+    .section-head{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:14px}
+    .section-note{margin:-6px 0 16px}
+    .hero{display:grid;grid-template-columns:1.25fr 1fr;gap:28px;align-items:center;padding:26px 0 30px}
+    .eyebrow{font-size:12px;font-weight:700;letter-spacing:.14em;color:#2563eb;margin:0}
+    .lead{font-size:15px;color:#475569;max-width:620px}
+    .hero-actions{display:flex;flex-wrap:wrap;gap:10px;margin-top:18px}
+    .btn{display:inline-flex;align-items:center;padding:10px 18px;border-radius:9px;border:1px solid #c7d2e4;background:#fff;color:#1d4ed8;font-weight:600;text-decoration:none}
+    .btn.primary{background:linear-gradient(180deg,#3b82f6,#1d4ed8);border-color:#1d4ed8;color:#fff;box-shadow:0 4px 14px rgba(37,99,235,.28)}
+    .btn:hover{transform:translateY(-1px)}
+    .hero-stats{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+    .stat{background:#fff;border:1px solid #e2e8f0;border-radius:14px;padding:16px 18px;box-shadow:0 1px 2px rgba(15,23,42,.04),0 4px 16px rgba(15,23,42,.06)}
+    .stat span{font-size:12px;color:#64748b}.stat strong{display:block;font-size:26px;color:#0b1730;margin:6px 0 2px}
+    .stat small{font-size:12px;color:#64748b}
+    .stat.good strong{color:#15803d}.stat.warn strong{color:#b45309}.stat.bad strong{color:#b91c1c}
+    /* 架构图 */
+    .flow{display:grid;gap:16px}
+    .lane{border:1px dashed #cbd5e1;border-radius:12px;padding:14px 16px 16px;background:linear-gradient(180deg,#fbfcff,#f6f9fe)}
+    .lane-title{font-size:12px;font-weight:700;color:#2563eb;letter-spacing:.06em;margin-bottom:10px}
+    .lane-row{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+    .arrow{color:#94a3b8;font-size:20px;font-weight:700}
+    .node{position:relative;display:flex;flex-direction:column;gap:2px;min-width:128px;padding:10px 14px;border-radius:10px;border:1px solid #dbe3ef;background:#fff}
+    .node b{font-size:13px;color:#0b1730}.node small{font-size:11px;color:#64748b}
+    .node.infra{background:#f8fafc}.node.store{background:#fffaf0;border-color:#f3e3c0}.node.external{background:#f1f5f9}
+    .node.service{border-color:#bfd3fb;background:#f5f8ff;padding-left:28px}
+    .node .dot{position:absolute;left:11px;top:15px;width:9px;height:9px;border-radius:50%;background:#94a3b8;box-shadow:0 0 0 3px #e2e8f0}
+    .node.good .dot{background:#16a34a;box-shadow:0 0 0 3px #dcfce7}.node.warn .dot{background:#d97706;box-shadow:0 0 0 3px #fef3c7}
+    .node.bad .dot{background:#dc2626;box-shadow:0 0 0 3px #fee2e2}
+    .node-stack{display:grid;grid-template-columns:repeat(auto-fit,minmax(128px,1fr));gap:8px;flex:1;min-width:280px}
+    .fanout{display:grid;gap:8px;flex:1;min-width:320px}
+    .branch{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+    .fanout .node.service{width:168px}.fanout .node.store,.fanout .node.external{width:132px}
+    .group-tag{font:11px Consolas,monospace;color:#475569;background:#eef2f7;border-radius:6px;padding:3px 7px;min-width:172px}
+    .lane.registry{display:flex;align-items:center;gap:14px;flex-wrap:wrap;border-style:solid;border-color:#dfe7f5}
+    /* 服务卡片 */
+    .service-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
+    .service{display:flex;flex-direction:column;gap:10px;border:1px solid #e2e8f0;border-radius:12px;padding:16px;background:#fff;transition:box-shadow .15s,transform .15s}
+    .service:hover{box-shadow:0 6px 22px rgba(15,23,42,.08);transform:translateY(-2px)}
+    .service-top{display:flex;justify-content:space-between;align-items:flex-start;gap:10px}
+    .service-id{font:12px Consolas,monospace;color:#64748b}
+    .service p{font-size:13px;margin:0}
+    .service-meta{display:flex;flex-wrap:wrap;gap:6px}
+    .service-meta .chip{font-size:12px;color:#334155;background:#f1f5f9;border-radius:6px;padding:3px 8px}
+    .service a{font-size:13px;font-weight:600;text-decoration:none;margin-top:auto}
+    /* 消费组 */
+    .consumer-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
+    .consumer{border:1px solid #e2e8f0;border-radius:12px;padding:16px;background:linear-gradient(180deg,#fff,#fafcff)}
+    .consumer h3{display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:4px}
+    .consumer .group{font:12px Consolas,monospace;color:#64748b;margin-bottom:10px}
+    .consumer dl{display:grid;grid-template-columns:auto 1fr;gap:6px 12px;margin:0}
+    .consumer dt{font-size:12px;color:#64748b}.consumer dd{margin:0;font-size:13px;color:#1e293b;text-align:right}
+    .consumer .error{margin-top:10px;font-size:12px;color:#9c2f2f;background:#fdecec;border-radius:6px;padding:6px 8px;overflow-wrap:anywhere}
+    /* 机制 */
+    .feature-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
+    .feature{border:1px solid #e2e8f0;border-radius:12px;padding:16px;background:#fff}
+    .feature .icon{display:grid;place-items:center;width:34px;height:34px;border-radius:9px;background:#eaf1ff;color:#2563eb;font-weight:700;margin-bottom:10px}
+    .feature p{font-size:13px;margin-top:6px}
+    footer{text-align:center;font-size:12px;color:#94a3b8;margin-top:8px}
+    #notice{padding:10px 14px;border-radius:8px;background:#eaf2ff;color:#254c80;margin-bottom:18px}
+    #notice.error{background:#fff4e0;color:#875d1c;border-color:#f3dcb0}
+    code{font:12px Consolas,monospace;background:#eef2f7;border-radius:4px;padding:1px 5px}
+    @media(max-width:960px){.hero{grid-template-columns:1fr}.service-grid,.consumer-grid,.feature-grid{grid-template-columns:repeat(2,1fr)}}
+    @media(max-width:640px){.service-grid,.consumer-grid,.feature-grid,.hero-stats{grid-template-columns:1fr}h1{font-size:24px}.arrow{transform:rotate(90deg)}}
+  </style>
   <link rel="stylesheet" href="dashboard-ui.css">
 </head>
 <body>
-  <main>
-    <h1>CachePulse</h1>
-    <p>基于 binlog 的缓存一致性与数据变更订阅平台。管理页面需要管理员登录。</p>
-    <ul>
-      <li><a href="cache-dashboard.html">缓存管理</a>：分组、命中率、新鲜度、死信、按主键查看和删除缓存</li>
-      <li><a href="platform-dashboard.html">数据变更平台</a>：变更历史、回滚 SQL、订阅、投递、重放</li>
-    </ul>
-  </main>
+<nav class="topbar"><div class="topbar-inner"><a class="brand" href="index.html"><span class="brand-mark">CP</span>CachePulse</a>
+  <div class="topbar-links"><a class="active" href="index.html" aria-current="page">微服务总览</a><a href="cache-dashboard.html">缓存同步</a><a href="platform-dashboard.html">数据变更平台</a></div></div></nav>
+<main>
+  <header class="hero">
+    <div>
+      <p class="eyebrow">CACHEPULSE · 微服务版</p>
+      <h1>缓存一致性与数据变更订阅平台</h1>
+      <p class="lead">MySQL 的每一次改动由 Canal 读出、写进 Kafka，三个服务各自消费：删缓存、存历史、发通知。对外只有一个网关，Nacos 负责服务注册和配置。</p>
+      <div class="hero-actions">
+        <a class="btn primary" href="cache-dashboard.html">缓存同步控制台</a>
+        <a class="btn" href="platform-dashboard.html">数据变更平台</a>
+      </div>
+    </div>
+    <div class="hero-stats">
+      <div class="stat" id="statServices"><span>服务</span><strong>—</strong><small>正在读取</small></div>
+      <div class="stat" id="statInstances"><span>健康实例</span><strong>—</strong><small>来自 Nacos 和健康检查</small></div>
+      <div class="stat" id="statFreshness"><span>缓存新鲜度</span><strong>—</strong><small>CDC 心跳</small></div>
+      <div class="stat" id="statConsumers"><span>消费组</span><strong>—</strong><small>同一个变更流</small></div>
+    </div>
+  </header>
+
+  <div id="notice" role="status" aria-live="polite">正在读取各服务状态…</div>
+
+  <section>
+    <div class="section-head"><h2>系统架构与数据流</h2><span class="muted" id="overviewUpdated">—</span></div>
+    <div class="flow">
+      <div class="lane">
+        <div class="lane-title">请求链路</div>
+        <div class="lane-row">
+          <div class="node external"><b>浏览器 / 调用方</b><small>HTTPS · 华为云 Nginx</small></div>
+          <span class="arrow">→</span>
+          <div class="node service" data-service="gateway"><i class="dot"></i><b>网关</b><small>JWT · 限流 · 熔断 · traceId</small></div>
+          <span class="arrow">→</span>
+          <div class="node-stack">
+            <div class="node service" data-service="demo-user-service"><i class="dot"></i><b>演示用户服务</b><small>用户、部门</small></div>
+            <div class="node service" data-service="demo-inventory-service"><i class="dot"></i><b>演示库存服务</b><small>库存、缺货待办</small></div>
+            <div class="node service" data-service="cache-sync-service"><i class="dot"></i><b>缓存同步服务</b><small>缓存管理接口</small></div>
+            <div class="node service" data-service="archive-service"><i class="dot"></i><b>归档服务</b><small>变更历史、恢复 SQL</small></div>
+            <div class="node service" data-service="delivery-service"><i class="dot"></i><b>投递服务</b><small>订阅、投递、重放</small></div>
+          </div>
+        </div>
+      </div>
+      <div class="lane">
+        <div class="lane-title">变更链路</div>
+        <div class="lane-row">
+          <div class="node store"><b>MySQL</b><small>demo_db · binlog</small></div>
+          <span class="arrow">→</span>
+          <div class="node infra"><b>Canal</b><small>读取 binlog</small></div>
+          <span class="arrow">→</span>
+          <div class="node infra"><b>Kafka</b><small>变更流 · 6 个分区</small></div>
+          <span class="arrow">⇉</span>
+          <div class="fanout">
+            <div class="branch"><span class="group-tag">cachepulse-cache-sync</span>
+              <div class="node service" data-service="cache-sync-service"><i class="dot"></i><b>缓存同步服务</b><small>按 库名.表名 删缓存</small></div>
+              <span class="arrow">→</span><div class="node store"><b>Redis</b><small>业务缓存</small></div></div>
+            <div class="branch"><span class="group-tag">cachepulse-archive</span>
+              <div class="node service" data-service="archive-service"><i class="dot"></i><b>归档服务</b><small>每行变更存一条</small></div>
+              <span class="arrow">→</span><div class="node store"><b>cp_archive</b><small>变更历史</small></div></div>
+            <div class="branch"><span class="group-tag">cachepulse-delivery</span>
+              <div class="node service" data-service="delivery-service"><i class="dot"></i><b>投递服务</b><small>按订阅生成任务</small></div>
+              <span class="arrow">→</span><div class="node external"><b>Webhook</b><small>接收方</small></div></div>
+          </div>
+        </div>
+      </div>
+      <div class="lane registry">
+        <div class="node infra"><b>Nacos</b><small>注册中心 · 配置中心</small></div>
+        <p>每个服务启动时注册到 Nacos，网关按服务名转发（<code>lb://</code>）；公共配置放在 Nacos，改了约 3 秒生效。</p>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <div class="section-head"><h2>服务状态</h2><span class="muted">每 10 秒刷新</span></div>
+    <div class="service-grid" id="serviceGrid"><p class="muted">正在读取…</p></div>
+  </section>
+
+  <section>
+    <div class="section-head"><h2>三个消费组</h2></div>
+    <p class="section-note">同一个变更流，三个服务各用自己的消费组，进度互不影响：一个慢了或停了，另外两个照常处理。</p>
+    <div class="consumer-grid" id="consumerGrid"><p class="muted">正在读取…</p></div>
+  </section>
+
+  <section>
+    <div class="section-head"><h2>微服务机制</h2></div>
+    <div class="feature-grid">
+      <div class="feature"><div class="icon">门</div><h3>统一入口</h3><p>网关是唯一对外入口。只读接口公开，写操作要 JWT；每个 IP 限流，登录另外限次数。</p></div>
+      <div class="feature"><div class="icon">册</div><h3>注册与配置</h3><p>服务注册到 Nacos，网关按服务名找实例；连接地址、订阅目标等配置放 Nacos，不用重启。</p></div>
+      <div class="feature"><div class="icon">调</div><h3>服务间调用</h3><p>重放历史事件时，投递服务用 OpenFeign 调归档服务的内部接口，带内部令牌，超时和熔断都有默认值。</p></div>
+      <div class="feature"><div class="icon">断</div><h3>熔断与降级</h3><p>网关每条路由一个熔断器。下游超时或熔断打开时返回 503 和原因，不返回假数据。</p></div>
+      <div class="feature"><div class="icon">链</div><h3>链路追踪</h3><p>网关生成 traceId，传给下游，响应头 <code>X-Trace-Id</code> 带回；拿着它能在各服务日志里查同一次请求。</p></div>
+      <div class="feature"><div class="icon">隔</div><h3>故障隔离</h3><p>三个消费组各管各的；处理不了的事件记下后跳过，一个慢接收端也拖不住其他投递。</p></div>
+    </div>
+  </section>
+  <footer>CachePulse · Spring Cloud Gateway · Nacos · Canal · Kafka · Redis · MySQL</footer>
+</main>
+<script src="dashboard-ui.js"></script>
+<script>
+const UI = window.DashboardUI;
+const esc = UI.escape;
+const SERVICES = {
+  'gateway': {name:'网关', port:18090, role:'唯一对外入口：路由、JWT 鉴权、按 IP 限流、登录限次、路由熔断、traceId。'},
+  'cache-sync-service': {name:'缓存同步服务', port:18091, role:'消费变更流，按 库名.表名 删 Redis 缓存；CDC 心跳判断缓存是否可信。', link:['cache-dashboard.html','缓存同步控制台']},
+  'archive-service': {name:'归档服务', port:18092, role:'把每一行变更存进 cp_archive，提供历史查询和恢复 SQL。', link:['platform-dashboard.html','变更历史查找']},
+  'delivery-service': {name:'投递服务', port:18093, role:'按条件订阅生成投递任务，Webhook 通知、失败重试、历史重放。', link:['platform-dashboard.html','订阅与投递']},
+  'demo-user-service': {name:'演示用户服务', port:18094, role:'接入方示例：@AutoCache 查询回填、防旧值回填、布隆过滤器、查库限流。'},
+  'demo-inventory-service': {name:'演示库存服务', port:18095, role:'接入方示例：库存数据，接收投递服务的缺货通知，生成待办。'}
+};
+const FRESHNESS = {FRESH:['正常','good'], STALE:['已降级','warn'], STARTING:['确认中','warn'], WRITE_FAILING:['心跳写入失败','bad'], DISABLED:['未启用','warn']};
+const BREAKER = {CLOSED:['熔断器正常','good'], OPEN:['已熔断','bad'], HALF_OPEN:['试探恢复中','warn'], FORCED_OPEN:['已熔断','bad'], DISABLED:['熔断器关闭','warn']};
+
+function notice(message, isError) {
+  const element = document.getElementById('notice');
+  element.textContent = message;
+  element.className = isError ? 'error' : '';
+}
+
+async function getJson(path) {
+  try {
+    const response = await UI.fetch(path);
+    if (!response.ok) return {unavailable: `HTTP ${response.status}`};
+    return await response.json();
+  } catch (error) {
+    return {unavailable: error.message};
+  }
+}
+
+function ago(value) {
+  if (!value) return '暂无记录';
+  const seconds = Math.max(0, Math.round((Date.now() - new Date(value).getTime()) / 1000));
+  if (seconds < 60) return `${seconds} 秒前`;
+  if (seconds < 3600) return `${Math.floor(seconds / 60)} 分钟前`;
+  return UI.date(value);
+}
+
+function health(service) {
+  const total = service.instances.length;
+  const up = service.instances.filter(i => i.status === 'UP').length;
+  if (service.registryError) return {up, total, label:'读不到注册信息', tone:'bad'};
+  if (total === 0) return {up, total, label:'未注册', tone:'bad'};
+  if (up === total) return {up, total, label: total === 1 ? '运行正常' : `${total} 个实例正常`, tone:'good'};
+  if (up === 0) return {up, total, label:'不可用', tone:'bad'};
+  return {up, total, label:`${up} / ${total} 个实例正常`, tone:'warn'};
+}
+
+function setStat(id, value, detail, tone) {
+  const element = document.getElementById(id);
+  element.className = 'stat' + (tone ? ' ' + tone : '');
+  element.querySelector('strong').textContent = value;
+  element.querySelector('small').textContent = detail;
+}
+
+function renderServices(overview) {
+  const grid = document.getElementById('serviceGrid');
+  if (overview.unavailable) {
+    grid.innerHTML = `<p class="result-message error">读不到服务状态：${esc(overview.unavailable)}</p>`;
+    return {healthy: 0, total: 0, up: 0, instances: 0};
+  }
+  let healthy = 0, up = 0, instances = 0;
+  const states = {};
+  grid.innerHTML = overview.services.map(service => {
+    const meta = SERVICES[service.serviceId] || {name: service.serviceId, role: ''};
+    const h = health(service);
+    states[service.serviceId] = h.tone;
+    if (h.tone === 'good') healthy++;
+    up += h.up; instances += h.total;
+    const breaker = service.circuitBreaker;
+    const [breakerLabel, breakerTone] = breaker ? (BREAKER[breaker.state] || [breaker.state, 'warn']) : ['', ''];
+    const rate = breaker && breaker.failureRate >= 0 ? `失败率 ${breaker.failureRate.toFixed(0)}%` : breaker ? '调用太少，未统计失败率' : '';
+    const ports = service.instances.map(i => `<span class="chip">:${esc(i.port)} ${i.status === 'UP' ? '正常' : esc(i.status)}</span>`).join('');
+    return `<div class="service"><div class="service-top"><div><h3>${esc(meta.name)}</h3><div class="service-id">${esc(service.serviceId)}${meta.port ? ' · :' + esc(meta.port) : ''}</div></div>
+      <span class="pill ${h.tone}">${esc(h.label)}</span></div>
+      <p>${esc(meta.role)}</p>
+      <div class="service-meta">${ports || '<span class="chip">没有实例</span>'}${breaker ? `<span class="pill ${breakerTone}">${esc(breakerLabel)}</span><span class="chip">${esc(rate)}</span>` : ''}</div>
+      ${meta.link ? `<a href="${esc(meta.link[0])}">打开${esc(meta.link[1])} →</a>` : ''}</div>`;
+  }).join('');
+  for (const node of document.querySelectorAll('[data-service]')) {
+    node.classList.remove('good', 'warn', 'bad');
+    if (states[node.dataset.service]) node.classList.add(states[node.dataset.service]);
+  }
+  return {healthy, total: overview.services.length, up, instances};
+}
+
+function consumerCard(title, group, item, rows) {
+  if (item.unavailable) {
+    return `<div class="consumer"><h3>${esc(title)}<span class="pill bad">读不到</span></h3><div class="group">${esc(group)}</div>
+      <p class="muted">${esc(item.unavailable)}</p></div>`;
+  }
+  const running = rows.running;
+  return `<div class="consumer"><h3>${esc(title)}<span class="pill ${running ? 'good' : 'bad'}">${running ? '运行中' : '未运行'}</span></h3>
+    <div class="group">${esc(group)}</div>
+    <dl>${rows.facts.map(([label, value]) => `<dt>${esc(label)}</dt><dd>${esc(value)}</dd>`).join('')}</dl>
+    ${item.lastError ? `<div class="error">最近异常：${esc(item.lastError.message)}（${esc(ago(item.lastError.occurredAt))}）</div>` : ''}</div>`;
+}
+
+function renderConsumers(sync, freshness, archiveStatus, delivery) {
+  const archive = archiveStatus.unavailable ? archiveStatus : archiveStatus.archive;
+  const fresh = freshness.unavailable ? null : (FRESHNESS[freshness.state] || [freshness.state, 'warn']);
+  const cards = [
+    consumerCard('缓存同步', 'cachepulse-cache-sync', sync, sync.unavailable ? {} : {
+      running: sync.serviceStarted && sync.activeConsumers > 0,
+      facts: [['消费线程', `${sync.activeConsumers} / ${sync.configuredConsumers}`], ['最近确认', ago(sync.lastSuccessAt)],
+        ['缓存新鲜度', fresh ? fresh[0] : '读不到']]}),
+    consumerCard('变更归档', 'cachepulse-archive', archive, archive.unavailable ? {} : {
+      running: archive.activeConsumer,
+      facts: [['最近确认', ago(archive.lastSuccessAt)], ['已存新事件', archive.acknowledgedNewRows],
+        ['跳过的坏事件', archive.acknowledgedRejectedEvents ?? 0]]}),
+    consumerCard('订阅投递', 'cachepulse-delivery', delivery, delivery.unavailable ? {} : {
+      running: delivery.activeConsumer,
+      facts: [['最近确认', ago(delivery.lastSuccessAt)], ['生成投递任务', delivery.createdTasks],
+        ['跳过的坏事件', delivery.acknowledgedRejectedEvents ?? 0]]})
+  ];
+  document.getElementById('consumerGrid').innerHTML = cards.join('');
+  const running = [!sync.unavailable && sync.serviceStarted && sync.activeConsumers > 0,
+    !archive.unavailable && archive.activeConsumer, !delivery.unavailable && delivery.activeConsumer].filter(Boolean).length;
+  return {running, fresh};
+}
+
+async function refresh() {
+  const [overview, sync, freshness, archive, delivery] = await Promise.all([
+    getJson('/system/overview'), getJson('/sync/status'), getJson('/cache/freshness'),
+    getJson('/platform/consumers/status'), getJson('/platform/deliveries/consumer-status')]);
+  const services = renderServices(overview);
+  const consumers = renderConsumers(sync, freshness, archive, delivery);
+  setStat('statServices', services.total ? `${services.healthy} / ${services.total}` : '—', '个服务运行正常',
+    !services.total ? 'bad' : services.healthy === services.total ? 'good' : 'warn');
+  setStat('statInstances', services.instances ? `${services.up} / ${services.instances}` : '—', '个实例通过健康检查',
+    !services.instances ? 'bad' : services.up === services.instances ? 'good' : 'warn');
+  setStat('statFreshness', consumers.fresh ? consumers.fresh[0] : '—', consumers.fresh ? '缓存可以放心读' : '读不到新鲜度',
+    consumers.fresh ? consumers.fresh[1] : 'bad');
+  if (consumers.fresh && consumers.fresh[1] !== 'good') {
+    document.querySelector('#statFreshness small').textContent = '查询暂时直接读库';
+  }
+  setStat('statConsumers', `${consumers.running} / 3`, '个消费组在运行', consumers.running === 3 ? 'good' : 'warn');
+  document.getElementById('overviewUpdated').textContent = `更新于 ${new Date().toLocaleTimeString()}`;
+  const problems = (services.total - services.healthy) + (3 - consumers.running);
+  notice(problems ? `有 ${problems} 处需要关注，见下方标红或标黄的卡片。` : '所有服务和消费组运行正常。', problems > 0);
+}
+
+refresh();
+setInterval(refresh, 10000);
+</script>
 </body>
 </html>

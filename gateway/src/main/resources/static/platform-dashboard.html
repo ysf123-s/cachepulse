@@ -47,8 +47,9 @@
   <link rel="stylesheet" href="dashboard-ui.css">
 </head>
 <body>
+<nav class="topbar"><div class="topbar-inner"><a class="brand" href="index.html"><span class="brand-mark">CP</span>CachePulse</a>
+  <div class="topbar-links"><a href="index.html">微服务总览</a><a href="cache-dashboard.html">缓存同步</a><a class="active" href="platform-dashboard.html" aria-current="page">数据变更平台</a></div></div></nav>
 <main>
-  <nav style="margin-bottom:14px;"><a href="cache-dashboard.html" style="color:#245dc1;font-weight:600;text-decoration:none;">← 返回 缓存同步控制台</a></nav>
   <header>
     <div>
       <h1>数据库变更处理平台</h1>
@@ -356,14 +357,15 @@ async function loadConsumerStatus() {
     ['服务', a.serviceStarted ? '已启动' : '未启动'],
     ['消费线程', a.activeConsumer ? '运行中' : '未运行'],
     ['最近成功确认', UI.date(a.lastSuccessAt)],
-    ['已确认新事件', a.acknowledgedNewRows], ['已确认重复事件', a.acknowledgedDuplicateRows]
+    ['已确认新事件', a.acknowledgedNewRows], ['已确认重复事件', a.acknowledgedDuplicateRows],
+    ['跳过的坏事件', a.acknowledgedRejectedEvents ?? 0]
   ]) + section('订阅投递', delivery, d => [
     ['服务', d.serviceStarted ? '已启动' : '未启动'],
     ['消费线程', d.activeConsumer ? '运行中' : '未运行'],
     ['最近成功确认', UI.date(d.lastSuccessAt)],
     ['已确认新事件', d.acknowledgedNewRows], ['已确认重复事件', d.acknowledgedDuplicateRows],
-    ['生成投递任务', d.createdTasks]
-  ]) + '<p class="muted">异常栏保留最近一次记录；当前消费进展可结合成功确认时间判断。</p>'
+    ['生成投递任务', d.createdTasks], ['跳过的坏事件', d.acknowledgedRejectedEvents ?? 0]
+  ]) + '<p class="muted">异常栏保留最近一次记录；当前消费进展可结合成功确认时间判断。跳过的坏事件（缺主键、解析不了、接收端已删除等）记在各自库的 rejected_event 表。</p>'
     + `<p class="result-updated">查询完成于 ${new Date().toLocaleTimeString()}</p>` + UI.technical(data);
   notice('消费状态已更新', false);
 }
