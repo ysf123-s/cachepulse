@@ -48,7 +48,8 @@ public class ReplayService {
                 sub.subscriptionId(), "PENDING", ids.size(), 0, 0, 0, ids, store.encode(sub), target.getUrl(), null,
                 Instant.now().toString(), Instant.now().toString());
         if (!store.saveReplayJob(job)) return reuse(req, ids, store.findReplayJobByRequestKey(req.requestKey()));
-        resume(jobId);
+        // 只保存任务，由 resumePending 在后台取事件、生成投递任务：一个任务最多向归档服务取 100 条事件，
+        // 归档服务慢的时候要好几分钟，放在请求里做会让网关先超时（设计文档 14.1 第 21 条）。
         return store.findReplayJob(jobId);
     }
 
@@ -56,8 +57,7 @@ public class ReplayService {
         if (!existing.subscriptionId().equals(req.subscriptionId()) || !existing.eventIds().equals(ids)) {
             throw new IllegalStateException("requestKey is already used by a different replay request");
         }
-        resume(existing.jobId());
-        return store.findReplayJob(existing.jobId());
+        return existing;
     }
 
     @Scheduled(fixedDelayString = "${platform.replay-delay-ms:500}")
@@ -65,9 +65,17 @@ public class ReplayService {
 
     private void resume(String id) {
         try { processJob(id); }
-        catch (RemoteCallException e) { store.recordReplayFailure(id, "archive-service: " + e.getMessage(), false); }
+        catch (RemoteCallException e) {
+            // 归档服务明确拒绝（401、403、400 等）是配置或请求的问题，重试也一样，任务直接失败；
+            // 超时、5xx、熔断、限流（429）稍后再试
+            store.recordReplayFailure(id, "archive-service: " + e.getMessage(), permanent(e));
+        }
         catch (DataAccessException e) { store.recordReplayFailure(id, e.getClass().getSimpleName() + ": " + e.getMessage(), false); }
         catch (IllegalStateException | IllegalArgumentException e) { store.recordReplayFailure(id, e.getMessage(), true); }
+    }
+
+    static boolean permanent(RemoteCallException e) {
+        return e.clientError() && e.remoteStatus() != 408 && e.remoteStatus() != 429;
     }
 
     /**

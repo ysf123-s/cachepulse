@@ -1,5 +1,6 @@
 package com.cachepulse.delivery;
 
+import com.cachepulse.common.event.RejectedEvent;
 import com.cachepulse.delivery.replay.ReplayJob;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
@@ -40,6 +41,24 @@ public class DeliveryStore {
 
     public TransactionTemplate transaction() {
         return transaction;
+    }
+
+    /**
+     * 记一条处理不了的事件（设计文档 14.1 第 19 条），返回 false 表示同一位置已经记过。
+     * 调用方要和本批的其他写入放在同一个本地事务里。
+     */
+    public boolean reject(RejectedEvent rejected) {
+        try {
+            jdbc.update("INSERT INTO rejected_event (rejection_key,event_id,subscription_id,kafka_topic,kafka_partition,"
+                            + "kafka_offset,database_name,table_name,event_type,binlog_file,binlog_position,reason) "
+                            + "VALUES (?,?,?,?,?,?,?,?,?,?,?,?)", rejected.rejectionKey(), rejected.eventId(),
+                    rejected.subscriptionId(), rejected.kafkaTopic(), rejected.kafkaPartition(), rejected.kafkaOffset(),
+                    rejected.databaseName(), rejected.tableName(), rejected.eventType(), rejected.binlogFile(),
+                    rejected.binlogPosition(), rejected.reason());
+            return true;
+        } catch (DuplicateKeyException e) {
+            return false;
+        }
     }
     public String encode(Object value) {
         try { return json.writeValueAsString(value); }

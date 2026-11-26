@@ -120,12 +120,12 @@ class ArchiveSourceDedupTest {
     }
 
     @Test
-    void missingSourcePositionFailsWithoutStoringHistory() {
+    void missingSourcePositionIsRejectedWithoutStoringHistory() {
         var entry = fixture.rows(CanalEntry.EventType.INSERT, inserted("1", "invalid"));
         var invalid = entry.toBuilder().setHeader(entry.getHeader().toBuilder().clearLogfileName().setLogfileOffset(0)).build();
-        assertThatThrownBy(() -> fixture.service.archive(fixture.record(100, invalid)))
-                .isInstanceOf(IllegalArgumentException.class).hasMessageContaining("binlog");
+        assertThat(fixture.service.archive(fixture.record(100, invalid)).rejected()).isEqualTo(1);
         assertThat(fixture.count()).isZero();
+        assertThat(fixture.jdbc.queryForObject("SELECT reason FROM rejected_event", String.class)).contains("binlog");
     }
 
     private static CanalEntry.Entry singleRow(CanalEntry.Entry original, CanalEntry.RowData row) {

@@ -191,7 +191,7 @@ public class SubscriptionController {
     }
 
     @PostMapping("/replay-jobs")
-    @ResponseStatus(HttpStatus.CREATED)
+    @ResponseStatus(HttpStatus.ACCEPTED)
     public ReplayJob createReplayJob(@RequestBody ReplayJob.Request request) {
         if (replayService == null) {
             throw new ResponseStatusException(HttpStatus.SERVICE_UNAVAILABLE, "Replay service is not available");

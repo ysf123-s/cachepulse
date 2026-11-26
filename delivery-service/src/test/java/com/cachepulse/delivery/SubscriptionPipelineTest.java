@@ -13,6 +13,7 @@ import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 
 import java.io.IOException;
 import java.net.http.HttpClient;
+import java.util.concurrent.CompletableFuture;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.sql.Types;
@@ -99,7 +100,7 @@ class SubscriptionPipelineTest {
         HttpResponse<String> mockResp = mock(HttpResponse.class);
         when(mockResp.statusCode()).thenReturn(200);
         when(mockResp.body()).thenReturn("{\"status\":\"ok\"}");
-        when(mockHttp.send(any(HttpRequest.class), any(HttpResponse.BodyHandler.class))).thenReturn(mockResp);
+        when(mockHttp.sendAsync(any(HttpRequest.class), any(HttpResponse.BodyHandler.class))).thenReturn(CompletableFuture.completedFuture(mockResp));
 
         int processed = executor.dispatch(10);
         assertThat(processed).isEqualTo(1);
@@ -130,7 +131,7 @@ class SubscriptionPipelineTest {
         HttpResponse<String> mockResp = mock(HttpResponse.class);
         when(mockResp.statusCode()).thenReturn(500);
         when(mockResp.body()).thenReturn("Internal Server Error");
-        when(mockHttp.send(any(HttpRequest.class), any(HttpResponse.BodyHandler.class))).thenReturn(mockResp);
+        when(mockHttp.sendAsync(any(HttpRequest.class), any(HttpResponse.BodyHandler.class))).thenReturn(CompletableFuture.completedFuture(mockResp));
 
         // Attempt 1 -> RETRY_WAIT
         executor.dispatch(10);
@@ -187,7 +188,7 @@ class SubscriptionPipelineTest {
         HttpResponse<String> mockResp = mock(HttpResponse.class);
         when(mockResp.statusCode()).thenReturn(400);
         when(mockResp.body()).thenReturn("Bad Request");
-        when(mockHttp.send(any(HttpRequest.class), any(HttpResponse.BodyHandler.class))).thenReturn(mockResp);
+        when(mockHttp.sendAsync(any(HttpRequest.class), any(HttpResponse.BodyHandler.class))).thenReturn(CompletableFuture.completedFuture(mockResp));
 
         executor.dispatch(10);
 

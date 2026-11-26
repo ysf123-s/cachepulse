@@ -53,13 +53,15 @@ class ArchivePipelineTest {
     }
 
     @Test
-    void failingLaterRowRollsBackEarlierRowsInTheSameKafkaRecord() {
+    void rowThatCanNeverBeArchivedIsRejectedAndTheOtherRowsOfTheRecordAreKept() {
         CanalEntry.RowData missingKey = CanalEntry.RowData.newBuilder()
                 .addAfterColumns(column("name", "broken", 1, Types.VARCHAR, "varchar(64)", false)).build();
-        assertThatThrownBy(() -> fixture.service.archive(fixture.record(21,
-                fixture.rows(CanalEntry.EventType.INSERT, inserted("1", "valid"), missingKey))))
-                .isInstanceOf(IllegalArgumentException.class).hasMessageContaining("primary key");
-        assertThat(fixture.count()).isZero();
+        ArchiveService.Result result = fixture.service.archive(fixture.record(21,
+                fixture.rows(CanalEntry.EventType.INSERT, inserted("1", "valid"), missingKey)));
+        assertThat(result.inserted()).isEqualTo(1);
+        assertThat(result.rejected()).isEqualTo(1);
+        assertThat(fixture.count()).isEqualTo(1);
+        assertThat(fixture.jdbc.queryForObject("SELECT reason FROM rejected_event", String.class)).contains("primary key");
     }
 
     @Test

@@ -2,6 +2,7 @@ package com.cachepulse.archive;
 
 import com.cachepulse.archive.recovery.RecoveryBaseline;
 import com.cachepulse.archive.recovery.RecoveryPlan;
+import com.cachepulse.common.event.RejectedEvent;
 import com.cachepulse.common.schema.SqlGenerator;
 import com.cachepulse.common.model.BinlogEvent;
 import com.cachepulse.common.model.KafkaCanalRecord;
@@ -122,6 +123,24 @@ public class ArchiveStore {
             catch (IllegalArgumentException | java.time.DateTimeException e) { return new ArchivedChange.Recovery(false, e.getMessage()); }
         }
         return new ArchivedChange.Recovery(true, "Eligible for a current-state pre-check; not proof of safe execution");
+    }
+
+    /**
+     * 记一条处理不了的事件（设计文档 14.1 第 19 条），返回 false 表示同一位置已经记过。
+     * 调用方要和本批的其他写入放在同一个本地事务里。
+     */
+    public boolean reject(RejectedEvent rejected) {
+        try {
+            jdbc.update("INSERT INTO rejected_event (rejection_key,event_id,subscription_id,kafka_topic,kafka_partition,"
+                            + "kafka_offset,database_name,table_name,event_type,binlog_file,binlog_position,reason) "
+                            + "VALUES (?,?,?,?,?,?,?,?,?,?,?,?)", rejected.rejectionKey(), rejected.eventId(),
+                    rejected.subscriptionId(), rejected.kafkaTopic(), rejected.kafkaPartition(), rejected.kafkaOffset(),
+                    rejected.databaseName(), rejected.tableName(), rejected.eventType(), rejected.binlogFile(),
+                    rejected.binlogPosition(), rejected.reason());
+            return true;
+        } catch (DuplicateKeyException e) {
+            return false;
+        }
     }
 
     public boolean insert(String eventId, String sourceEventKey, TableSchema schema, KafkaCanalRecord record, BinlogEvent event,

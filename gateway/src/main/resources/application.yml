@@ -96,9 +96,8 @@ spring:
                     fallbackUri: forward:/fallback/archive-service
             - id: delivery
               uri: lb://delivery-service
-              # 创建重放任务时要向归档服务取最多 100 条事件，超时放宽到 15 秒
-              metadata:
-                response-timeout: 15000
+              # 创建重放任务只保存任务、立即返回（设计文档 14.1 第 21 条），和其他路由一样用 5 秒超时；
+              # 熔断的慢调用线 4 秒也就对得上了（以前这里放宽到 15 秒，正常重放会被算成慢调用而触发熔断）
               predicates:
                 - Path=/api/platform/subscriptions/**,/api/platform/deliveries/**,/api/platform/replay-jobs/**,/api/platform/targets/**,/api/platform/examples/**,/api/platform/demo/webhook/**
               filters:
@@ -171,9 +170,6 @@ resilience4j:
     configs:
       default:
         timeout-duration: 5s
-    instances:
-      delivery-service:
-        timeout-duration: 15s
 
 cachepulse:
   gateway:

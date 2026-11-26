@@ -57,7 +57,12 @@ class ReplayPipelineTest {
         String initialDeliveryId = initialTasks.get(0).deliveryId();
 
         // The archive answers 404 (Optional.empty) for the unknown event: skipped, not a failure.
-        ReplayJob job = replayService.createReplayJob(new ReplayJob.Request("req-rep-001", "sub-replay-1", List.of(eventId1, "f".repeat(64))));
+        ReplayJob created = replayService.createReplayJob(new ReplayJob.Request("req-rep-001", "sub-replay-1", List.of(eventId1, "f".repeat(64))));
+        assertThat(created.status()).as("saved only; resumePending does the work").isEqualTo("PENDING");
+        assertThat(fixture.store.replayDeliveryStats(created.jobId())).isEmpty();
+
+        replayService.resumePending();
+        ReplayJob job = fixture.store.findReplayJob(created.jobId());
 
         assertThat(job.status()).isEqualTo("COMPLETED");
         assertThat(job.totalEvents()).isEqualTo(2);
@@ -88,7 +93,9 @@ class ReplayPipelineTest {
         };
         ReplayService service = new ReplayService(fixture.properties, fixture.store, flaky);
 
-        ReplayJob job = service.createReplayJob(new ReplayJob.Request("req-remote", "sub-remote", List.of(eventId)));
+        ReplayJob created = service.createReplayJob(new ReplayJob.Request("req-remote", "sub-remote", List.of(eventId)));
+        service.resumePending();
+        ReplayJob job = fixture.store.findReplayJob(created.jobId());
         assertThat(job.status()).isEqualTo("PENDING");
         assertThat(job.lastError()).startsWith("archive-service: ").contains("unavailable");
         assertThat(fixture.store.replayDeliveryStats(job.jobId())).isEmpty();
@@ -106,7 +113,9 @@ class ReplayPipelineTest {
     void allMissingEventsAreSkipped() {
         fixture.subscribe("sub-missing", "replay-hook", "INSERT", true);
         ReplayService service = new ReplayService(fixture.properties, fixture.store, id -> Optional.empty());
-        ReplayJob job = service.createReplayJob(new ReplayJob.Request("req-missing", "sub-missing", List.of("a".repeat(64), "b".repeat(64))));
+        ReplayJob created = service.createReplayJob(new ReplayJob.Request("req-missing", "sub-missing", List.of("a".repeat(64), "b".repeat(64))));
+        service.resumePending();
+        ReplayJob job = fixture.store.findReplayJob(created.jobId());
         assertThat(job.status()).isEqualTo("COMPLETED");
         assertThat(job.matchedEvents()).isZero();
         assertThat(job.skippedEvents()).isEqualTo(2);
@@ -122,10 +131,52 @@ class ReplayPipelineTest {
         ReplayJob.Request request = new ReplayJob.Request("same-key-123", "sub-replay-2", List.of(eventId));
         ReplayJob first = replayService.createReplayJob(request);
         ReplayJob second = replayService.createReplayJob(request);
+        replayService.resumePending();
+        ReplayJob afterCompletion = replayService.createReplayJob(request);
 
         assertThat(second.jobId()).isEqualTo(first.jobId());
+        assertThat(afterCompletion.jobId()).isEqualTo(first.jobId());
+        assertThat(afterCompletion.status()).isEqualTo("COMPLETED");
         // 1 initial + 1 replay = exactly 2 tasks
         assertThat(fixture.store.listDeliveryTasks(null, "sub-replay-2", eventId, 10)).hasSize(2);
+    }
+
+    @Test
+    @DisplayName("Creating a job does not call the archive service, so a slow archive cannot time out the request")
+    void creatingAJobDoesNotWaitForTheArchive() {
+        fixture.subscribe("sub-async", "replay-hook", "INSERT", true);
+        ReplayService service = new ReplayService(fixture.properties, fixture.store, id -> {
+            throw new AssertionError("archive must not be called on the request thread");
+        });
+
+        ReplayJob job = service.createReplayJob(new ReplayJob.Request("req-async", "sub-async", List.of("c".repeat(64))));
+
+        assertThat(job.status()).isEqualTo("PENDING");
+        assertThat(job.lastError()).isNull();
+    }
+
+    @Test
+    @DisplayName("An archive 4xx such as 401 fails the job; 429 and 5xx keep it pending for another try")
+    void archiveClientErrorsFailTheJobInsteadOfRetryingForever() {
+        fixture.subscribe("sub-4xx", "replay-hook", "INSERT", true);
+        AtomicReference<RuntimeException> answer = new AtomicReference<>(
+                new RemoteCallException("archive-service", 429, "RATE_LIMITED", "slow down", null, null));
+        ReplayService service = new ReplayService(fixture.properties, fixture.store, id -> { throw answer.get(); });
+        ReplayJob job = service.createReplayJob(new ReplayJob.Request("req-4xx", "sub-4xx", List.of("d".repeat(64))));
+
+        service.resumePending();
+        assertThat(fixture.store.findReplayJob(job.jobId()).status()).isEqualTo("PENDING");
+
+        answer.set(new RemoteCallException("archive-service", 503, "UNAVAILABLE", "down", null, null));
+        service.resumePending();
+        assertThat(fixture.store.findReplayJob(job.jobId()).status()).isEqualTo("PENDING");
+
+        answer.set(new RemoteCallException("archive-service", 401, "INTERNAL_TOKEN_REQUIRED", "token mismatch", null, null));
+        service.resumePending();
+        ReplayJob failed = fixture.store.findReplayJob(job.jobId());
+        assertThat(failed.status()).isEqualTo("FAILED");
+        assertThat(failed.lastError()).contains("token mismatch");
+        assertThat(fixture.store.pendingReplayIds()).doesNotContain(job.jobId());
     }
 
     @Test
@@ -167,17 +218,19 @@ class ReplayPipelineTest {
         String res = mvc.perform(post("/platform/replay-jobs")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(body))
-                .andExpect(status().isCreated())
+                .andExpect(status().isAccepted())
                 .andExpect(jsonPath("$.jobId").exists())
-                .andExpect(jsonPath("$.matchedEvents").value(1))
-                .andExpect(jsonPath("$.status").value("COMPLETED"))
+                .andExpect(jsonPath("$.status").value("PENDING"))
                 .andReturn().getResponse().getContentAsString();
 
         String jobId = new com.fasterxml.jackson.databind.ObjectMapper().readTree(res).get("jobId").asText();
+        replayService.resumePending();
 
         mvc.perform(get("/platform/replay-jobs/{id}", jobId))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.requestKey").value("http-key-001"))
+                .andExpect(jsonPath("$.status").value("COMPLETED"))
+                .andExpect(jsonPath("$.matchedEvents").value(1))
                 .andExpect(jsonPath("$.totalEvents").value(1));
         mvc.perform(get("/platform/replay-jobs/{id}/delivery-stats", jobId))
                 .andExpect(status().isOk()).andExpect(jsonPath("$.PENDING").value(1));

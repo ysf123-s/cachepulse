@@ -2,12 +2,17 @@ package com.cachepulse.archive;
 
 import com.cachepulse.common.kafka.CanalConnectorWrapper;
 import com.cachepulse.common.model.KafkaCanalRecord;
+import com.cachepulse.common.parser.BinlogParser;
 
 import com.alibaba.otter.canal.protocol.CanalEntry;
 import org.junit.jupiter.api.Test;
+import org.springframework.dao.DataAccessResourceFailureException;
+import org.springframework.jdbc.datasource.DataSourceTransactionManager;
+import org.springframework.transaction.support.TransactionTemplate;
 
 import java.util.List;
 import java.sql.Types;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import static com.cachepulse.archive.ArchiveTestFixture.column;
 import static com.cachepulse.archive.ArchiveTestFixture.inserted;
@@ -61,18 +66,23 @@ class ArchiveConsumerTest {
 
     /** Delivery tasks are no longer written by the archive (design 6.4); DeliveryConsumerTest covers their rollback. */
     @Test
-    void laterRecordFailureRollsBackWholePollBeforeSuccessfulReplay() throws Exception {
+    void databaseFailureLaterInThePollRollsBackWholePollBeforeSuccessfulReplay() throws Exception {
         ArchiveTestFixture fixture = new ArchiveTestFixture();
         KafkaCanalRecord first = fixture.record(10, fixture.rows(CanalEntry.EventType.INSERT, inserted("1", "first")));
-        CanalEntry.RowData missingKey = CanalEntry.RowData.newBuilder()
-                .addAfterColumns(column("name", "broken", 1, Types.VARCHAR, "varchar(64)", false)).build();
-        KafkaCanalRecord broken = fixture.record(11, fixture.rows(CanalEntry.EventType.INSERT, missingKey));
         KafkaCanalRecord second = fixture.record(11, fixture.rows(CanalEntry.EventType.INSERT, inserted("2", "second")));
+        ArchiveStore store = spy(fixture.store);
+        AtomicInteger inserts = new AtomicInteger();
+        doAnswer(call -> {
+            if (inserts.incrementAndGet() == 2) throw new DataAccessResourceFailureException("database unavailable");
+            return call.callRealMethod();
+        }).when(store).insert(any(), any(), any(), any(), any(), any(), any());
+        ArchiveService service = new ArchiveService(fixture.properties, fixture.tables, new BinlogParser(), store,
+                new TransactionTemplate(new DataSourceTransactionManager(fixture.platform)));
         CanalConnectorWrapper.PartitionConsumer kafka = mock(CanalConnectorWrapper.PartitionConsumer.class);
-        when(kafka.getRecordsWithoutAck()).thenReturn(List.of(first, broken), List.of(first, second), List.of(first, second));
-        ArchiveConsumer consumer = new ArchiveConsumer(mock(CanalConnectorWrapper.class), fixture.service, "archive");
+        when(kafka.getRecordsWithoutAck()).thenReturn(List.of(first, second), List.of(first, second), List.of(first, second));
+        ArchiveConsumer consumer = new ArchiveConsumer(mock(CanalConnectorWrapper.class), service, "archive");
 
-        assertThatThrownBy(() -> consumer.processBatch(kafka)).hasMessageContaining("primary key");
+        assertThatThrownBy(() -> consumer.processBatch(kafka)).hasMessageContaining("database unavailable");
         assertThat(fixture.count()).isZero();
         verify(kafka, never()).ack();
         assertThat(consumer.status().acknowledgedNextOffsets()).isEmpty();
@@ -84,5 +94,26 @@ class ArchiveConsumerTest {
         assertThat(consumer.status().acknowledgedDuplicateRows()).isEqualTo(2);
         assertThat(consumer.status().acknowledgedNextOffsets()).containsEntry("example:2", "12");
         verify(kafka, times(2)).ack();
+    }
+
+    @Test
+    void rowThatCanNeverBeArchivedIsRejectedInsteadOfStallingThePartition() throws Exception {
+        ArchiveTestFixture fixture = new ArchiveTestFixture();
+        CanalEntry.RowData missingKey = CanalEntry.RowData.newBuilder()
+                .addAfterColumns(column("name", "broken", 1, Types.VARCHAR, "varchar(64)", false)).build();
+        KafkaCanalRecord broken = fixture.record(10, fixture.rows(CanalEntry.EventType.INSERT, missingKey));
+        KafkaCanalRecord next = fixture.record(11, fixture.rows(CanalEntry.EventType.INSERT, inserted("2", "next")));
+        CanalConnectorWrapper.PartitionConsumer kafka = mock(CanalConnectorWrapper.PartitionConsumer.class);
+        when(kafka.getRecordsWithoutAck()).thenReturn(List.of(broken, next));
+        ArchiveConsumer consumer = new ArchiveConsumer(mock(CanalConnectorWrapper.class), fixture.service, "archive");
+
+        assertThat(consumer.processBatch(kafka)).isTrue();
+
+        verify(kafka).ack();
+        assertThat(fixture.count()).isEqualTo(1);
+        assertThat(consumer.status().acknowledgedRejectedEvents()).isEqualTo(1);
+        assertThat(consumer.status().acknowledgedNextOffsets()).containsEntry("example:2", "12");
+        assertThat(fixture.jdbc.queryForObject("SELECT reason FROM rejected_event WHERE kafka_offset=10", String.class))
+                .contains("primary key");
     }
 }

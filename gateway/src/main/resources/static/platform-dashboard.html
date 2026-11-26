@@ -758,9 +758,21 @@ async function submitReplay() {
   });
 
   document.getElementById('replayJobId').value = result.jobId;
+  // 任务在后台处理（设计文档 14.1 第 21 条），这里最多等 15 秒看结果
+  let job = result;
+  for (let i = 0; i < 15 && (job.status === 'PENDING' || job.status === 'RUNNING'); i++) {
+    await new Promise(resolve => setTimeout(resolve, 1000));
+    job = await api(`/platform/replay-jobs/${result.jobId}`);
+  }
   const deliveries = await api(`/platform/replay-jobs/${result.jobId}/delivery-stats`);
-  renderReplay(result, deliveries);
-  notice(`本轮已提交：匹配 ${result.matchedEvents} 条，跳过 ${result.skippedEvents} 条`, false);
+  renderReplay(job, deliveries);
+  if (job.status === 'COMPLETED') {
+    notice(`本轮已提交：匹配 ${job.matchedEvents} 条，跳过 ${job.skippedEvents} 条`, false);
+  } else if (job.status === 'FAILED') {
+    notice(`重放失败：${job.lastError || '原因未知'}`, true);
+  } else {
+    notice('重放任务已提交，还在后台处理，稍后点“查询进度与投递结果”查看', false);
+  }
 }
 
 async function refreshReplay() {

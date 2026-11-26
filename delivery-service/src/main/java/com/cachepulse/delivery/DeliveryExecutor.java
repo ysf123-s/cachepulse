@@ -7,18 +7,29 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.scheduling.annotation.Scheduled;
 
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.net.http.HttpTimeoutException;
+import java.nio.ByteBuffer;
+import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.*;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionStage;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Flow;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 
 public class DeliveryExecutor {
     private static final Logger log = LoggerFactory.getLogger(DeliveryExecutor.class);
+    /** 接收端的响应只存前 500 个字符做摘要，多读一些留给多字节字符，其余不读。 */
+    static final int RESPONSE_BODY_LIMIT = 4096;
 
     private final PlatformProperties properties;
     private final DeliveryStore store;
@@ -85,12 +96,12 @@ public class DeliveryExecutor {
             timeoutMs = targetConfig.getTimeoutMs();
         }
 
-        String payload = buildHttpPayload(task, attemptNum);
-
         HttpResponse<String> response = null;
         Exception error = null;
+        CompletableFuture<HttpResponse<String>> pending = null;
 
         try {
+            String payload = buildHttpPayload(task, attemptNum);
             HttpRequest request = HttpRequest.newBuilder()
                     .uri(URI.create(task.targetUrl()))
                     .timeout(Duration.ofMillis(timeoutMs))
@@ -100,20 +111,94 @@ public class DeliveryExecutor {
                     .POST(HttpRequest.BodyPublishers.ofString(payload))
                     .build();
 
-            response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
+            // HttpRequest.timeout 只管到收到响应头；接收端发完头再慢慢发内容时会一直等。
+            // 整次发送（连接、等响应、读内容）共用一个期限，内容只读前 RESPONSE_BODY_LIMIT 字节（设计文档 14.1 第 20 条）。
+            pending = httpClient.sendAsync(request, responseBody(RESPONSE_BODY_LIMIT));
+            response = pending.get(timeoutMs, TimeUnit.MILLISECONDS);
         } catch (InterruptedException e) {
+            if (pending != null) pending.cancel(true);
             Thread.currentThread().interrupt();
             return; // Keep the lease for restart recovery; no fabricated HTTP result.
-        } catch (IOException | IllegalArgumentException e) {
+        } catch (TimeoutException e) {
+            pending.cancel(true);
+            error = new HttpTimeoutException("No complete response within " + timeoutMs + " ms");
+        } catch (ExecutionException e) {
+            Throwable cause = e.getCause() == null ? e : e.getCause();
+            error = cause instanceof Exception exception ? exception : new IOException(cause);
+        } catch (RuntimeException e) {
+            // 存的事件内容坏了、地址不合法等：记一次失败，不再让任务一直卡在 IN_FLIGHT、每个租约周期重来一遍
             error = e;
         }
 
         long durationMs = (System.nanoTime() - startNanos) / 1_000_000L;
-        handleExecutionResult(task, attemptNum, durationMs, response, error);
+        if (!handleExecutionResult(task, attemptNum, durationMs, response, error)) {
+            log.warn("Delivery result for task {} was discarded: its lease expired or was taken over after {} ms",
+                    task.taskId(), durationMs);
+        }
     }
 
-    private void handleExecutionResult(DeliveryTask task, int attemptNum, long durationMs,
-                                       HttpResponse<String> response, Exception error) {
+    /** 只留前 limit 字节，够了就停止读取并关闭连接；结果按 UTF-8 解码，截断处可能多一个替换字符。 */
+    static HttpResponse.BodyHandler<String> responseBody(int limit) {
+        return info -> new LimitedBodySubscriber(limit);
+    }
+
+    private static final class LimitedBodySubscriber implements HttpResponse.BodySubscriber<String> {
+        private final int limit;
+        private final ByteArrayOutputStream received = new ByteArrayOutputStream();
+        private final CompletableFuture<String> body = new CompletableFuture<>();
+        private Flow.Subscription subscription;
+
+        LimitedBodySubscriber(int limit) {
+            this.limit = limit;
+        }
+
+        @Override
+        public CompletionStage<String> getBody() {
+            return body;
+        }
+
+        @Override
+        public void onSubscribe(Flow.Subscription subscription) {
+            this.subscription = subscription;
+            subscription.request(1);
+        }
+
+        @Override
+        public void onNext(List<ByteBuffer> buffers) {
+            if (body.isDone()) {
+                return;
+            }
+            for (ByteBuffer buffer : buffers) {
+                int take = Math.min(buffer.remaining(), limit - received.size());
+                byte[] bytes = new byte[take];
+                buffer.get(bytes);
+                received.write(bytes, 0, take);
+                if (received.size() >= limit) {
+                    subscription.cancel();
+                    complete();
+                    return;
+                }
+            }
+            subscription.request(1);
+        }
+
+        @Override
+        public void onError(Throwable throwable) {
+            body.completeExceptionally(throwable);
+        }
+
+        @Override
+        public void onComplete() {
+            complete();
+        }
+
+        private void complete() {
+            body.complete(received.toString(StandardCharsets.UTF_8));
+        }
+    }
+
+    private boolean handleExecutionResult(DeliveryTask task, int attemptNum, long durationMs,
+                                          HttpResponse<String> response, Exception error) {
         Integer statusCode = response != null ? response.statusCode() : null;
         String responseSummary = response != null && response.body() != null
                 ? truncate(response.body().trim(), 500) : null;
@@ -125,8 +210,7 @@ public class DeliveryExecutor {
                     0L, task.taskId(), attemptNum, "SUCCEEDED", statusCode, durationMs,
                     null, responseSummary, null, Instant.now().toString()
             );
-            store.finishDelivery(task, attempt);
-            return;
+            return store.finishDelivery(task, attempt);
         }
 
         // Failure handling
@@ -161,14 +245,14 @@ public class DeliveryExecutor {
                     0L, task.taskId(), attemptNum, "RETRY_WAIT", statusCode, durationMs,
                     failureReason, responseSummary, nextRetry.toString(), Instant.now().toString()
             );
-            store.finishDelivery(task, attempt);
+            return store.finishDelivery(task, attempt);
         } else {
             // Final failure
             DeliveryAttempt attempt = new DeliveryAttempt(
                     0L, task.taskId(), attemptNum, "FAILED", statusCode, durationMs,
                     failureReason, responseSummary, null, Instant.now().toString()
             );
-            store.finishDelivery(task, attempt);
+            return store.finishDelivery(task, attempt);
         }
     }
 

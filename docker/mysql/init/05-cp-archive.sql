@@ -76,3 +76,24 @@ CREATE TABLE IF NOT EXISTS recovery_plan (
     INDEX idx_plan_event (event_id),
     INDEX idx_plan_table (source_id, database_name, table_name)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_bin;
+
+-- 处理不了的事件（设计文档 14.1 第 19 条）：缺主键、Entry 解析不了等，重试多少次结果都一样。
+-- 记下后跳过，后面的消息照常处理；和本批的其他写入在同一个本地事务里提交。表结构和投递服务的同名表相同。
+CREATE TABLE IF NOT EXISTS rejected_event (
+    rejection_id BIGINT NOT NULL AUTO_INCREMENT PRIMARY KEY,
+    rejection_key CHAR(64) NOT NULL,
+    event_id CHAR(64),
+    subscription_id CHAR(64),
+    kafka_topic VARCHAR(255) NOT NULL,
+    kafka_partition INT NOT NULL,
+    kafka_offset BIGINT NOT NULL,
+    database_name VARCHAR(64),
+    table_name VARCHAR(64),
+    event_type VARCHAR(16),
+    binlog_file VARCHAR(255),
+    binlog_position BIGINT,
+    reason VARCHAR(1024) NOT NULL,
+    created_at TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
+    UNIQUE KEY uk_rejection_key (rejection_key),
+    INDEX idx_rejected_created (created_at)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_bin;

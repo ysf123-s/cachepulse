@@ -1,18 +1,22 @@
 package com.cachepulse.delivery;
 
 import com.cachepulse.common.event.EventIdentity;
+import com.cachepulse.common.event.RejectedEvent;
 import com.cachepulse.common.kafka.BackgroundWritePacer;
 import com.cachepulse.common.kafka.CanalConnectorWrapper;
 import com.cachepulse.common.model.BinlogEvent;
 import com.cachepulse.common.model.ConsumerError;
 import com.cachepulse.common.model.KafkaCanalRecord;
+import com.cachepulse.common.model.UnprocessableEventException;
 import com.cachepulse.common.parser.BinlogParser;
 import com.cachepulse.common.platform.PlatformProperties;
 import com.cachepulse.common.schema.TableSchema;
 
+import com.alibaba.otter.canal.protocol.CanalEntry;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.kafka.common.errors.InterruptException;
 
+import java.time.DateTimeException;
 import java.time.Instant;
 import java.util.HashMap;
 import java.util.List;
@@ -36,6 +40,7 @@ public class DeliveryConsumer implements AutoCloseable {
     private final AtomicLong newEvents = new AtomicLong();
     private final AtomicLong duplicates = new AtomicLong();
     private final AtomicLong tasksCreated = new AtomicLong();
+    private final AtomicLong rejectedEvents = new AtomicLong();
     private final Map<String, String> acknowledgedOffsets = new ConcurrentHashMap<>();
     private volatile boolean running;
     private volatile boolean active;
@@ -92,6 +97,7 @@ public class DeliveryConsumer implements AutoCloseable {
         newEvents.addAndGet(result.newEvents());
         duplicates.addAndGet(result.duplicates());
         tasksCreated.addAndGet(result.tasks());
+        rejectedEvents.addAndGet(result.rejected());
         for (KafkaCanalRecord record : records) {
             acknowledgedOffsets.put(record.topic() + ":" + record.partition(), Long.toString(record.offset() + 1));
         }
@@ -100,62 +106,100 @@ public class DeliveryConsumer implements AutoCloseable {
         return true;
     }
 
-    /** 和归档服务相同的事件 ID、源事件键算法，同一条 binlog 在两个服务里得到同一个 eventId。 */
+    /**
+     * 和归档服务相同的事件 ID、源事件键算法，同一条 binlog 在两个服务里得到同一个 eventId。
+     * 处理不了的事件记到 rejected_event 后跳过（设计文档 14.1 第 19 条）：整行处理不了（缺主键、Entry 解析不了）时
+     * 不登记源事件；只是某个订阅投不了（接收端别名已删除、筛选值比较不了）时，同一行的其他订阅照常生成任务。
+     * 数据库出错照旧整批回滚重试。
+     */
     public Result handle(List<KafkaCanalRecord> records) {
         return store.transaction().execute(status -> {
             Map<String, List<EventSubscription>> subscriptionsByTable = new HashMap<>();
-            int created = 0, duplicate = 0, tasks = 0, ddl = 0;
+            int created = 0, duplicate = 0, tasks = 0, ddl = 0, rejected = 0;
             for (KafkaCanalRecord record : records) {
                 if (record.message() == null || record.message().isRaw()) {
-                    throw new IllegalArgumentException("Expected a decoded Canal Message at " + record.topic() + ":"
-                            + record.partition() + ":" + record.offset());
+                    rejected += reject(RejectedEvent.ofRecord(properties.getSourceId(), record,
+                            "Expected a decoded Canal Message"));
+                    continue;
                 }
-                List<BinlogEvent> events = parser.parseIncludingDdl(record.message().getEntries());
+                List<CanalEntry.Entry> entries = record.message().getEntries();
                 Map<String, Integer> sourceRowOccurrences = new HashMap<>();
-                for (BinlogEvent event : events) {
-                    if (event.isDdl()) {
-                        if (properties.getDatabase().equals(event.getDatabaseName())) { ddl++; }
+                for (int entryIndex = 0; entryIndex < entries.size(); entryIndex++) {
+                    List<BinlogEvent> events;
+                    try {
+                        events = parser.parseEntry(entries.get(entryIndex), entryIndex);
+                    } catch (UnprocessableEventException e) {
+                        rejected += reject(RejectedEvent.ofEntry(properties.getSourceId(), record, entryIndex,
+                                entries.get(entryIndex), e));
                         continue;
                     }
-                    TableSchema schema = tables.get(event.getDatabaseName(), event.getTableName());
-                    if (schema == null) { continue; }
-                    Map<String, Object> current = event.getAfterData() == null ? event.getBeforeData() : event.getAfterData();
-                    String key = primaryKey(current, schema);
-                    String beforeKey = event.getBeforeData() == null ? null : primaryKey(event.getBeforeData(), schema);
-                    String eventId = EventIdentity.of(properties.getSourceId(), record, event);
-                    String sourceRowKey = EventIdentity.sourceRowKey(properties.getSourceId(), event, key, beforeKey);
-                    int occurrence = sourceRowOccurrences.merge(sourceRowKey, 1, Integer::sum) - 1;
-                    String sourceEventKey = EventIdentity.sourceEventKey(sourceRowKey, occurrence);
-                    if (!store.claimSourceEvent(sourceEventKey, eventId)) { duplicate++; continue; }
-                    created++;
-                    List<EventSubscription> subscriptions = subscriptionsByTable.computeIfAbsent(schema.table(),
-                            table -> store.findEnabledSubscriptions(properties.getSourceId(), schema.database(), table));
-                    tasks += createTasks(eventId, event, subscriptions);
+                    for (BinlogEvent event : events) {
+                        if (event.isDdl()) {
+                            if (properties.getDatabase().equals(event.getDatabaseName())) { ddl++; }
+                            continue;
+                        }
+                        TableSchema schema = tables.get(event.getDatabaseName(), event.getTableName());
+                        if (schema == null) { continue; }
+                        String eventId;
+                        String sourceRowKey;
+                        try {
+                            Map<String, Object> current = event.getAfterData() == null ? event.getBeforeData() : event.getAfterData();
+                            String key = primaryKey(current, schema);
+                            String beforeKey = event.getBeforeData() == null ? null : primaryKey(event.getBeforeData(), schema);
+                            eventId = EventIdentity.of(properties.getSourceId(), record, event);
+                            sourceRowKey = EventIdentity.sourceRowKey(properties.getSourceId(), event, key, beforeKey);
+                        } catch (IllegalArgumentException e) {
+                            rejected += reject(RejectedEvent.ofEvent(properties.getSourceId(), record, event, null,
+                                    RejectedEvent.reason(e)));
+                            continue;
+                        }
+                        int occurrence = sourceRowOccurrences.merge(sourceRowKey, 1, Integer::sum) - 1;
+                        String sourceEventKey = EventIdentity.sourceEventKey(sourceRowKey, occurrence);
+                        if (!store.claimSourceEvent(sourceEventKey, eventId)) { duplicate++; continue; }
+                        created++;
+                        List<EventSubscription> subscriptions = subscriptionsByTable.computeIfAbsent(schema.table(),
+                                table -> store.findEnabledSubscriptions(properties.getSourceId(), schema.database(), table));
+                        Created result = createTasks(record, eventId, event, subscriptions);
+                        tasks += result.tasks();
+                        rejected += result.rejected();
+                    }
                 }
             }
-            return new Result(created, duplicate, tasks, ddl);
+            return new Result(created, duplicate, tasks, ddl, rejected);
         });
     }
 
-    private int createTasks(String eventId, BinlogEvent event, List<EventSubscription> subscriptions) {
-        int created = 0;
+    private record Created(int tasks, int rejected) { }
+
+    private Created createTasks(KafkaCanalRecord record, String eventId, BinlogEvent event,
+                                List<EventSubscription> subscriptions) {
+        int created = 0, rejected = 0;
         String payload = null;
         for (EventSubscription sub : subscriptions) {
-            if (!SubscriptionMatcher.matches(event, sub)) { continue; }
-            PlatformProperties.TargetConfig target = properties.getTargets().get(sub.targetName());
-            if (target == null) {
-                throw new IllegalStateException("Subscription target is not registered: " + sub.targetName());
-            }
-            if (payload == null) { payload = store.encode(event); }
-            String now = Instant.now().toString();
-            String deliveryId = EventIdentity.hash("delivery:" + eventId + ":" + sub.subscriptionId() + ":INITIAL");
-            if (store.createDeliveryTask(new DeliveryTask(0L, deliveryId, eventId, sub.subscriptionId(), "INITIAL", "INITIAL",
-                    sub.targetName(), target.getUrl(), "PENDING", 0, properties.getMaxAttempts(), null, null,
-                    now, null, payload, store.encode(sub), now, now))) {
-                created++;
+            try {
+                if (!SubscriptionMatcher.matches(event, sub)) { continue; }
+                PlatformProperties.TargetConfig target = properties.getTargets().get(sub.targetName());
+                if (target == null) {
+                    // 订阅还在、接收端别名已从 Nacos 删掉：只是这个订阅投不了，恢复别名后可用重放补投
+                    rejected += reject(RejectedEvent.ofEvent(properties.getSourceId(), record, event,
+                            sub.subscriptionId(), "Subscription target is not registered: " + sub.targetName()));
+                    continue;
+                }
+                if (payload == null) { payload = store.encode(event); }
+                String now = Instant.now().toString();
+                String deliveryId = EventIdentity.hash("delivery:" + eventId + ":" + sub.subscriptionId() + ":INITIAL");
+                if (store.createDeliveryTask(new DeliveryTask(0L, deliveryId, eventId, sub.subscriptionId(), "INITIAL", "INITIAL",
+                        sub.targetName(), target.getUrl(), "PENDING", 0, properties.getMaxAttempts(), null, null,
+                        now, null, payload, store.encode(sub), now, now))) {
+                    created++;
+                }
+            } catch (IllegalArgumentException | DateTimeException e) {
+                // 筛选值和这一行的值比较不了（如零日期）、内容无法编码：同样的消息重试结果也一样
+                rejected += reject(RejectedEvent.ofEvent(properties.getSourceId(), record, event,
+                        sub.subscriptionId(), RejectedEvent.reason(e)));
             }
         }
-        return created;
+        return new Created(created, rejected);
     }
 
     private String primaryKey(Map<String, Object> values, TableSchema schema) {
@@ -164,6 +208,14 @@ public class DeliveryConsumer implements AutoCloseable {
             throw new IllegalArgumentException("Missing or oversized primary key " + schema.table() + "." + schema.primaryKey());
         }
         return value.toString();
+    }
+
+    private int reject(RejectedEvent rejected) {
+        log.error("Rejected unprocessable event; it is recorded in rejected_event and skipped: kafka={}:{}:{} table={}.{} "
+                        + "binlog={}:{} eventId={} subscription={} reason={}", rejected.kafkaTopic(), rejected.kafkaPartition(),
+                rejected.kafkaOffset(), rejected.databaseName(), rejected.tableName(), rejected.binlogFile(),
+                rejected.binlogPosition(), rejected.eventId(), rejected.subscriptionId(), rejected.reason());
+        return store.reject(rejected) ? 1 : 0;
     }
 
     private void reloadCatalog() {
@@ -182,7 +234,7 @@ public class DeliveryConsumer implements AutoCloseable {
 
     public Status status() {
         return new Status(running, active, properties.getGroupId(), lastSuccessAt, lastError, newEvents.get(),
-                duplicates.get(), tasksCreated.get(), Map.copyOf(acknowledgedOffsets));
+                duplicates.get(), tasksCreated.get(), rejectedEvents.get(), Map.copyOf(acknowledgedOffsets));
     }
 
     @Override
@@ -195,9 +247,11 @@ public class DeliveryConsumer implements AutoCloseable {
         }
     }
 
-    public record Result(int newEvents, int duplicates, int tasks, int ddl) { }
+    /** rejected：本批新记到 rejected_event 的事件数，按行或按订阅计（同一位置重复投递时不再计）。 */
+    public record Result(int newEvents, int duplicates, int tasks, int ddl, int rejected) { }
 
+    /** acknowledgedRejectedEvents：启动以来记到 rejected_event 并跳过的事件数（设计文档 14.1 第 19 条）。 */
     public record Status(boolean serviceStarted, boolean activeConsumer, String groupId, Instant lastSuccessAt,
                          ConsumerError lastError, long acknowledgedNewRows, long acknowledgedDuplicateRows,
-                         long createdTasks, Map<String, String> acknowledgedNextOffsets) { }
+                         long createdTasks, long acknowledgedRejectedEvents, Map<String, String> acknowledgedNextOffsets) { }
 }

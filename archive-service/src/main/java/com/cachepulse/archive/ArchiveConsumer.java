@@ -23,6 +23,7 @@ public class ArchiveConsumer implements AutoCloseable {
     private final BackgroundWritePacer pacer = new BackgroundWritePacer();
     private final AtomicLong inserted = new AtomicLong();
     private final AtomicLong duplicates = new AtomicLong();
+    private final AtomicLong rejected = new AtomicLong();
     private final Map<String, String> acknowledgedOffsets = new ConcurrentHashMap<>();
     private volatile boolean running;
     private volatile boolean active;
@@ -75,6 +76,7 @@ public class ArchiveConsumer implements AutoCloseable {
         consumer.ack();
         inserted.addAndGet(result.inserted());
         duplicates.addAndGet(result.duplicates());
+        rejected.addAndGet(result.rejected());
         for (KafkaCanalRecord record : records) {
             acknowledgedOffsets.put(record.topic() + ":" + record.partition(), Long.toString(record.offset() + 1));
         }
@@ -90,7 +92,7 @@ public class ArchiveConsumer implements AutoCloseable {
 
     public Status status() {
         return new Status(running, active, groupId, lastSuccessAt, lastError, inserted.get(), duplicates.get(),
-                Map.copyOf(acknowledgedOffsets));
+                rejected.get(), Map.copyOf(acknowledgedOffsets));
     }
 
     @Override
@@ -103,7 +105,8 @@ public class ArchiveConsumer implements AutoCloseable {
         }
     }
 
+    /** acknowledgedRejectedEvents：启动以来记到 rejected_event 并跳过的事件数（设计文档 14.1 第 19 条）。 */
     public record Status(boolean serviceStarted, boolean activeConsumer, String groupId, Instant lastSuccessAt,
                          ConsumerError lastError, long acknowledgedNewRows, long acknowledgedDuplicateRows,
-                         Map<String, String> acknowledgedNextOffsets) { }
+                         long acknowledgedRejectedEvents, Map<String, String> acknowledgedNextOffsets) { }
 }
