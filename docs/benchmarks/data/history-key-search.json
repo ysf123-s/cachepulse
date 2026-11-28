@@ -1,0 +1,30 @@
+{
+  "date": "2026-11-28",
+  "source": "records/cachepulse-history-search-20261128 (diag-before.txt, verify-after.txt, public-after.txt)",
+  "change_event": {"rows_estimate": 1118400, "departments_rows": 1266687, "users_rows": 7, "inventory_rows": 8, "size_mb": 2878},
+  "innodb_buffer_pool_mb": 128,
+  "old_query": {
+    "sql": "one SELECT: (primary_key_value=? OR before_primary_key_value=?) ORDER BY sequence_id DESC LIMIT 21",
+    "plan": "Limit 21 <- Filter <- Index scan on change_event using PRIMARY (reverse), estimated 41 rows"
+  },
+  "new_query": {
+    "commit": "f7e0dd7",
+    "sql": "one branch per table and key column, each ORDER BY sequence_id DESC LIMIT 21, UNION, then ORDER BY sequence_id DESC LIMIT 21",
+    "plan": "per branch: Index lookup using idx_event_table_key or idx_event_table_old_key (reverse); Union materialize with deduplication; Sort limit 21"
+  },
+  "sql_runs": [
+    {"key": "996", "rows_by_key": 212, "rows_by_old_key": 211, "old_ms": [13185, 13770], "new_explain_analyze_ms": [14.1, 7.6, 17.4, 8.93], "same_rows": true},
+    {"key": "1340", "note": "department updated most by the load tests", "rows_by_key": 2621, "rows_by_old_key": 2620, "old_ms": [4661], "new_explain_analyze_ms": [7.3, 4.83], "same_rows": true},
+    {"key": "987654321", "note": "no such key", "rows_by_key": 0, "rows_by_old_key": 0, "old_ms": [5754], "new_explain_analyze_ms": [0.0691, 0.0537], "same_rows": true}
+  ],
+  "gateway_on_server_after_s": {
+    "limit=20 (no key)": [0.109, 0.064, 0.055, 0.049, 0.057, 0.052],
+    "limit=20&key=996": [0.078, 0.055, 0.052, 0.055, 0.051, 0.054],
+    "limit=20&key=1340": [0.088, 0.057, 0.059, 0.065, 0.057, 0.083],
+    "limit=20&key=987654321": [0.058, 0.057, 0.055],
+    "limit=20&table=departments&key=996": [0.056, 0.051, 0.056],
+    "limit=1&table=departments&key=996&operation=UPDATE": [0.048, 0.039, 0.060]
+  },
+  "public_before": "12 key searches, all HTTP 503: 10 after about 7 s (gateway timeout 5 s plus about 2 s of public network), 2 after about 2 s (route circuit breaker open)",
+  "public_after": "15 key searches, all HTTP 200 in 1.97-2.30 s; unfiltered pages and static files also take about 2 s on this path"
+}
