@@ -1,7 +1,7 @@
 {
   "date": "2026-11-28",
   "source": "records/cachepulse-history-search-20261128 (diag-before.txt, verify-after.txt, public-after.txt)",
-  "change_event": {"rows_estimate": 1118400, "departments_rows": 1266687, "users_rows": 7, "inventory_rows": 8, "size_mb": 2878},
+  "change_event": {"rows_counted": 1266702, "rows_estimate_information_schema": 1118400, "departments_rows": 1266687, "users_rows": 7, "inventory_rows": 8, "size_mb": 2878},
   "innodb_buffer_pool_mb": 128,
   "old_query": {
     "sql": "one SELECT: (primary_key_value=? OR before_primary_key_value=?) ORDER BY sequence_id DESC LIMIT 21",

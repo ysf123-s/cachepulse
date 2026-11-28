@@ -160,7 +160,7 @@
 
 ## 10. 按主键查历史（11-28，`records/cachepulse-history-search-20261128`）
 
-管理页面"变更历史"按主键值筛选，调的是归档服务 `GET /platform/events?key=`。线上 `change_event` 约 112 万行、2.9 GB，其中 `departments` 126.7 万行（大多是压测写入），InnoDB 缓冲池 128 MB。数据：`data/history-key-search.json`。
+管理页面"变更历史"按主键值筛选，调的是归档服务 `GET /platform/events?key=`。线上 `change_event` 约 127 万行、2.9 GB，几乎都是 `departments`（126.7 万行，大多是压测写入），InnoDB 缓冲池 128 MB。数据：`data/history-key-search.json`。
 
 | | 旧查询 | 新查询（`f7e0dd7`） |
 | --- | --- | --- |
