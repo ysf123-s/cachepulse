@@ -21,6 +21,7 @@ import org.springframework.transaction.support.TransactionTemplate;
 import java.sql.ResultSet;
 import java.time.ZoneId;
 import java.sql.SQLException;
+import java.util.ArrayList;
 import java.util.List;
 
 /** Explicit SQL over the platform datasource only; no business Mapper or transaction manager is reused. */
@@ -165,21 +166,43 @@ public class ArchiveStore {
 
     public ArchivedChange.Page search(PlatformProperties properties, ArchivedChange.Filter filter) {
         MapSqlParameterSource parameters = new MapSqlParameterSource().addValue("source", properties.getSourceId())
-                .addValue("database", properties.getDatabase()).addValue("tables", properties.getTables());
-        StringBuilder sql = new StringBuilder("SELECT " + SUMMARY_COLUMNS + " FROM change_event WHERE source_id=:source"
-                + " AND database_name=:database AND table_name IN (:tables)");
-        if (filter.before() != null) { sql.append(" AND sequence_id<:before"); parameters.addValue("before", filter.before()); }
-        if (filter.table() != null) { sql.append(" AND table_name=:table"); parameters.addValue("table", filter.table()); }
-        if (filter.key() != null) {
-            sql.append(" AND (primary_key_value=:key OR before_primary_key_value=:key)");
+                .addValue("database", properties.getDatabase()).addValue("limit", filter.limit() + 1);
+        StringBuilder common = new StringBuilder();
+        if (filter.before() != null) { common.append(" AND sequence_id<:before"); parameters.addValue("before", filter.before()); }
+        if (filter.operation() != null) { common.append(" AND operation=:operation"); parameters.addValue("operation", filter.operation()); }
+        if (filter.from() != null) { common.append(" AND event_time_ms>=:from"); parameters.addValue("from", filter.from()); }
+        if (filter.to() != null) { common.append(" AND event_time_ms<=:to"); parameters.addValue("to", filter.to()); }
+        String sql;
+        if (filter.key() == null) {
+            parameters.addValue("tables", properties.getTables());
+            if (filter.table() != null) { parameters.addValue("table", filter.table()); }
+            sql = "SELECT " + SUMMARY_COLUMNS + " FROM change_event WHERE source_id=:source AND database_name=:database"
+                    + " AND table_name IN (:tables)" + (filter.table() == null ? "" : " AND table_name=:table") + common
+                    + " ORDER BY sequence_id DESC LIMIT :limit";
+        } else {
+            // One query with "primary_key_value=:key OR before_primary_key_value=:key" and ORDER BY sequence_id LIMIT ran
+            // past the gateway's 5 s timeout on the live archive (2026-11-28): no single index serves both the OR and the
+            // order. One branch per (table, key column) instead: each reads its own (source, database, table, key,
+            // sequence_id) index newest first and stops at the limit; UNION drops the row that matches both columns
+            // (an update that keeps the key).
+            List<String> tables = filter.table() == null ? properties.getTables()
+                    : properties.getTables().contains(filter.table()) ? List.of(filter.table()) : List.of();
+            if (tables.isEmpty()) {
+                return new ArchivedChange.Page(List.of(), null);
+            }
             parameters.addValue("key", filter.key());
+            List<String> branches = new ArrayList<>();
+            for (int index = 0; index < tables.size(); index++) {
+                parameters.addValue("table" + index, tables.get(index));
+                for (String column : List.of("primary_key_value", "before_primary_key_value")) {
+                    branches.add("(SELECT " + SUMMARY_COLUMNS + " FROM change_event WHERE source_id=:source AND database_name=:database"
+                            + " AND table_name=:table" + index + " AND " + column + "=:key" + common
+                            + " ORDER BY sequence_id DESC LIMIT :limit)");
+                }
+            }
+            sql = String.join(" UNION ", branches) + " ORDER BY sequence_id DESC LIMIT :limit";
         }
-        if (filter.operation() != null) { sql.append(" AND operation=:operation"); parameters.addValue("operation", filter.operation()); }
-        if (filter.from() != null) { sql.append(" AND event_time_ms>=:from"); parameters.addValue("from", filter.from()); }
-        if (filter.to() != null) { sql.append(" AND event_time_ms<=:to"); parameters.addValue("to", filter.to()); }
-        sql.append(" ORDER BY sequence_id DESC LIMIT :limit");
-        parameters.addValue("limit", filter.limit() + 1);
-        List<ArchivedChange.Summary> rows = named.query(sql.toString(), parameters, (rs, index) -> summary(rs));
+        List<ArchivedChange.Summary> rows = named.query(sql, parameters, (rs, index) -> summary(rs));
         boolean more = rows.size() > filter.limit();
         List<ArchivedChange.Summary> items = more ? rows.subList(0, filter.limit()) : rows;
         return new ArchivedChange.Page(items, more ? items.get(items.size() - 1).sequence() : null);

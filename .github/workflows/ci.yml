@@ -44,7 +44,7 @@ jobs:
           import glob, sys
           import xml.etree.ElementTree as ET
           classes = ['CacheBrowseRedisTest', 'CacheFillRedisTest', 'CacheIndexRedisTest', 'HeartbeatChainRedisTest',
-                     'CanalCacheIntegrationTest', 'RecoveryMysqlTest']
+                     'CanalCacheIntegrationTest', 'RecoveryMysqlTest', 'ArchiveKeySearchMysqlTest']
           bad = []
           for name in classes:
               files = glob.glob(f'**/target/surefire-reports/TEST-*.{name}.xml', recursive=True)
